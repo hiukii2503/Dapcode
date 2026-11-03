@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:dummy-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy-google-client-secret}
+            scope:
+              - email
+              - profile
+              - openid
+  application:
+    name: backend-core
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dapcode_db
+    username: postgres
+    password: 123123
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+jwt:
+  secret: ${JWT_SECRET:K7vQ8zP2mR4wX9yL1tN5bC0fG3jH6kE8sA1dF4gJ7hL=}
+  expiration-ms: 86400000
+
+
+
