@@ -2,6 +2,7 @@ package com.dapcode.backend_core.config;
 
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -24,6 +25,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+
+    @Value("${app.oauth2.redirect-uri:http://localhost:5173/auth/callback}")
+    private String redirectUri;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -50,6 +54,16 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .build();
         });
 
+        // Chặn user nếu tài khoản đã bị khóa
+        if (!user.isActive()) {
+            log.warn("Login blocked: user account is locked/inactive: email={}", email);
+            String errorUrl = UriComponentsBuilder.fromUriString(redirectUri)
+                    .queryParam("error", "account_locked")
+                    .build().toUriString();
+            getRedirectStrategy().sendRedirect(request, response, errorUrl);
+            return;
+        }
+
         if (user.getGoogleId() == null) {
             user.setGoogleId(googleId);
         }
@@ -60,7 +74,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String token = jwtTokenProvider.generateToken(user);
 
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/auth/callback")
+        String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("token", token)
                 .build().toUriString();
 

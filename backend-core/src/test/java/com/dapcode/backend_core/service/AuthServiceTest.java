@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.dapcode.backend_core.common.ErrorCode;
 import com.dapcode.backend_core.config.JwtTokenProvider;
@@ -35,6 +36,9 @@ public class AuthServiceTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -46,7 +50,7 @@ public class AuthServiceTest {
                 .id(UUID.randomUUID())
                 .username("admin")
                 .email("admin@dapcode.io")
-                .passwordHash("admin123")
+                .passwordHash("hashed-admin123")
                 .role("ROLE_ADMIN")
                 .isActive(true)
                 .build();
@@ -60,6 +64,7 @@ public class AuthServiceTest {
                 .build();
 
         when(userRepository.findByEmail("admin@dapcode.io")).thenReturn(Optional.of(testAdmin));
+        when(passwordEncoder.matches("admin123", "hashed-admin123")).thenReturn(true);
         when(jwtTokenProvider.generateToken(any(Users.class))).thenReturn("mock-jwt-token-xyz");
 
         AuthResponse response = authService.authenticateAdmin(req);
@@ -76,6 +81,9 @@ public class AuthServiceTest {
                 .usernameOrEmail("admin@dapcode.io")
                 .password("wrongpassword")
                 .build();
+
+        when(userRepository.findByEmail("admin@dapcode.io")).thenReturn(Optional.of(testAdmin));
+        when(passwordEncoder.matches("wrongpassword", "hashed-admin123")).thenReturn(false);
 
         AppException ex = assertThrows(AppException.class, () -> authService.authenticateAdmin(req));
         assertEquals(ErrorCode.INVALID_CREDENTIALS, ex.getErrorCode());
@@ -95,4 +103,3 @@ public class AuthServiceTest {
         assertEquals(ErrorCode.USER_LOCKED, ex.getErrorCode());
     }
 }
-

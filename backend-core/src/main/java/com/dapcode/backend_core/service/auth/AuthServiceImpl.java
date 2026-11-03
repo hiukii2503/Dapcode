@@ -3,16 +3,18 @@ package com.dapcode.backend_core.service.auth;
 import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dapcode.backend_core.common.ErrorCode;
 import com.dapcode.backend_core.config.JwtTokenProvider;
+import com.dapcode.backend_core.dto.auth.AdminLoginRequest;
 import com.dapcode.backend_core.dto.auth.AuthResponse;
 import com.dapcode.backend_core.dto.auth.LoginGoogleRequest;
+import com.dapcode.backend_core.dto.auth.UserSummaryDto;
 import com.dapcode.backend_core.entity.Users;
 import com.dapcode.backend_core.exception.AppException;
-import com.dapcode.backend_core.dto.auth.UserSummaryDto;
 import com.dapcode.backend_core.repository.UserRepository;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -28,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
@@ -98,50 +101,29 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
-    public AuthResponse authenticateAdmin(com.dapcode.backend_core.dto.auth.AdminLoginRequest req) {
+    @Transactional(readOnly = true)
+    public AuthResponse authenticateAdmin(AdminLoginRequest req) {
         String input = req.getUsernameOrEmail() != null ? req.getUsernameOrEmail().trim() : "";
         String password = req.getPassword() != null ? req.getPassword().trim() : "";
 
-        boolean isDefaultAdmin = ("admin".equalsIgnoreCase(input)
-                || "admin@dapcode.io".equalsIgnoreCase(input)
-                || "dapcode_admin".equalsIgnoreCase(input))
-                && ("admin123".equals(password) || "admin".equals(password));
+        if (input.isBlank() || password.isBlank()) {
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
+        }
 
-        Users user = null;
-        if (isDefaultAdmin) {
-            user = userRepository.findByEmail("admin@dapcode.io")
-                    .orElseGet(() -> userRepository.findByUsername("dapcode_admin")
-                            .orElseGet(() -> {
-                                Users newAdmin = Users.builder()
-                                        .username("dapcode_admin")
-                                        .email("admin@dapcode.io")
-                                        .role("ROLE_ADMIN")
-                                        .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=dapcode_admin")
-                                        .xp(9999)
-                                        .streakCount(30)
-                                        .build();
-                                return userRepository.save(newAdmin);
-                            }));
-        } else {
-            user = userRepository.findByEmail(input)
-                    .orElseGet(() -> userRepository.findByUsername(input).orElse(null));
+        Users user = userRepository.findByEmail(input)
+                .or(() -> userRepository.findByUsername(input))
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
 
-            if (user == null || !"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
-                throw new AppException(ErrorCode.INVALID_CREDENTIALS);
-            }
-
-            if (user.getPasswordHash() != null && !user.getPasswordHash().isBlank()) {
-                if (!password.equals(user.getPasswordHash())) {
-                    throw new AppException(ErrorCode.INVALID_CREDENTIALS);
-                }
-            } else if (!"admin123".equals(password) && !"admin".equals(password)) {
-                throw new AppException(ErrorCode.INVALID_CREDENTIALS);
-            }
+        if (!"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         if (!user.isActive()) {
             throw new AppException(ErrorCode.USER_LOCKED);
+        }
+
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         String genToken = jwtTokenProvider.generateToken(user);

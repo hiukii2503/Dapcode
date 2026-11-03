@@ -8,9 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DBContext {
-    private static final String URL = "jdbc:postgresql://localhost:5432/dapcode_db";
-    private static final String USERNAME = "postgres";
-    private static final String PASSWORD = "123123";
+    private static final String URL = System.getProperty("DB_URL",
+            System.getenv().getOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/dapcode_db"));
+    private static final String USERNAME = System.getProperty("DB_USERNAME",
+            System.getenv().getOrDefault("DB_USERNAME", "postgres"));
+    private static final String PASSWORD = System.getProperty("DB_PASSWORD",
+            System.getenv().getOrDefault("DB_PASSWORD", "123123"));
 
     static {
         try {
@@ -24,4 +27,3 @@ public class DBContext {
         return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 }
-
