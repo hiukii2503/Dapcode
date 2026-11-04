@@ -27,40 +27,38 @@ export default function AdminRoute({ children }) {
   const [errorMessage, setErrorMessage] = useState('');
 
   const checkAdminAuth = () => {
-    let localUser = null;
-    try {
-      localUser = JSON.parse(localStorage.getItem('dapcode_user') || 'null');
-    } catch {
-      localUser = null;
-    }
-    setCurrentUser(localUser);
-
     const token = localStorage.getItem('dapcode_token');
-    if (!token && !localUser) {
+
+    // 1. Không có token -> Chưa đăng nhập, từ chối và hiện form
+    if (!token) {
+      localStorage.removeItem('dapcode_user');
+      setCurrentUser(null);
       setState('denied');
       return;
     }
 
+    // 2. Có token -> Gửi lên Server để verify tính hợp lệ chữ ký mật mã qua /api/v1/users/me
     getCurrentUser()
       .then((res) => {
         const u = res?.data || res;
-        if (u) {
-          const merged = { ...localUser, ...u };
-          localStorage.setItem('dapcode_user', JSON.stringify(merged));
-          setCurrentUser(merged);
-        }
-        if (u?.role === 'ROLE_ADMIN') {
+        // Kiểm tra chặt chẽ vai trò ROLE_ADMIN từ phía server database
+        if (u && u.role === 'ROLE_ADMIN') {
+          localStorage.setItem('dapcode_user', JSON.stringify(u));
+          setCurrentUser(u);
           setState('ok');
         } else {
+          // Token hợp lệ nhưng tài khoản không có quyền Admin
+          setCurrentUser(u);
           setState('denied');
         }
       })
       .catch(() => {
-        if (localUser?.role === 'ROLE_ADMIN') {
-          setState('ok');
-        } else {
-          setState('denied');
-        }
+        // Token giả mạo, hết hạn hoặc không khớp chữ ký số bí mật (HTTP 401/403)
+        // Thu hồi token và dữ liệu trong localStorage
+        localStorage.removeItem('dapcode_token');
+        localStorage.removeItem('dapcode_user');
+        setCurrentUser(null);
+        setState('denied');
       });
   };
 
@@ -98,33 +96,10 @@ export default function AdminRoute({ children }) {
       throw new Error('Không nhận được token xác thực quản trị viên.');
     } catch (err) {
       console.error('Lỗi đăng nhập admin:', err);
-      // Fallback dev mock login if server returned error or backend offline
-      if (
-        (username === 'admin' || username === 'dapcode_admin') &&
-        (password === 'admin123' || password === 'admin')
-      ) {
-        const adminUser = {
-          id: '0529d450-19bc-4762-931b-28c7daf3d6ec',
-          username: 'dapcode_admin',
-          name: 'LiệtCode Admin',
-          email: 'admin@lietcode.io',
-          role: 'ROLE_ADMIN',
-          avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=dapcode_admin',
-          streak: 30,
-          xp: 9999,
-        };
-        localStorage.setItem('dapcode_user', JSON.stringify(adminUser));
-        localStorage.setItem('dapcode_token', 'demo_admin_jwt_token');
-        setCurrentUser(adminUser);
-        setIsLoading(false);
-        setState('ok');
-        return;
-      }
-
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        'Tài khoản hoặc mật khẩu không chính xác. Bạn có thể thử tài khoản mặc định: admin / admin123';
+        'Tài khoản hoặc mật khẩu không chính xác. Tài khoản mặc định: admin / admin123';
       setErrorMessage(msg);
       setIsLoading(false);
     }
@@ -141,26 +116,6 @@ export default function AdminRoute({ children }) {
     setErrorMessage('');
     sessionStorage.setItem('dapcode_auth_return', window.location.pathname);
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
-  };
-
-  const handleAdminDemoLogin = () => {
-    setIsLoading(true);
-    setErrorMessage('');
-    const adminUser = {
-      id: '0529d450-19bc-4762-931b-28c7daf3d6ec',
-      username: 'dapcode_admin',
-      name: 'LiệtCode Admin',
-      email: 'admin@lietcode.io',
-      role: 'ROLE_ADMIN',
-      avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=dapcode_admin',
-      streak: 30,
-      xp: 9999,
-    };
-    localStorage.setItem('dapcode_user', JSON.stringify(adminUser));
-    localStorage.setItem('dapcode_token', 'demo_admin_jwt_token');
-    setCurrentUser(adminUser);
-    setIsLoading(false);
-    setState('ok');
   };
 
   const handleLogoutOtherAccount = () => {
@@ -371,15 +326,7 @@ export default function AdminRoute({ children }) {
             <span>Đăng nhập Google (Tài khoản đã phân quyền Admin)</span>
           </button>
 
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={handleAdminDemoLogin}
-            className="btn btn-soft-primary border border-primary border-opacity-25 w-100 d-flex align-items-center justify-content-center gap-2 rounded-3 fs-xs"
-          >
-            <ShieldCheck size={16} />
-            <span>Đăng nhập nhanh Admin (Dev Mock)</span>
-          </button>
+
         </div>
 
         {/* Back to student page link */}

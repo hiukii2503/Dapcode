@@ -36,6 +36,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<ApiResponse<Void>> handlingGenericException(Exception exception) {
+        exception.printStackTrace();
         return ResponseEntity
                 .status(ErrorCode.UNCATEGORIZED_EXCEPTION.getHttpStatus())
                 .body(ApiResponse.error(ErrorCode.UNCATEGORIZED_EXCEPTION));
