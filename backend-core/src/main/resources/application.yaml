@@ -17,7 +17,7 @@ spring:
     name: backend-core
   
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5433/dapcode_db}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/dapcode_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:123123}
     driver-class-name: org.postgresql.Driver
