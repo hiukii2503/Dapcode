@@ -34,6 +34,11 @@ spring:
     enabled: true
     baseline-on-migrate: true
 
+judge0:
+  base-url: ${JUDGE0_BASE_URL:http://localhost:2358}
+  connection-timeout-ms: 5000
+  read-timeout-ms: 10000
+
 jwt:
   secret: ${JWT_SECRET:K7vQ8zP2mR4wX9yL1tN5bC0fG3jH6kE8sA1dF4gJ7hL=}
   expiration-ms: 86400000

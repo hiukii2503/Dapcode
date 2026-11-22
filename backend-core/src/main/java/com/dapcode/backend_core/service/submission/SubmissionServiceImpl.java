@@ -1,0 +1,432 @@
+package com.dapcode.backend_core.service.submission;
+
+import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.dapcode.backend_core.common.ErrorCode;
+import com.dapcode.backend_core.dto.submission.SubmissionDetailResponse;
+import com.dapcode.backend_core.dto.submission.SubmissionProgressEvent;
+import com.dapcode.backend_core.dto.submission.SubmissionResponse;
+import com.dapcode.backend_core.dto.submission.SubmitCodeRequest;
+import com.dapcode.backend_core.dto.submission.TestCaseResult;
+import com.dapcode.backend_core.entity.Problem;
+import com.dapcode.backend_core.entity.Submission;
+import com.dapcode.backend_core.entity.TestCase;
+import com.dapcode.backend_core.entity.Users;
+import com.dapcode.backend_core.exception.AppException;
+import com.dapcode.backend_core.judge0.Judge0Client;
+import com.dapcode.backend_core.judge0.Judge0Response;
+import com.dapcode.backend_core.judge0.Judge0Status;
+import com.dapcode.backend_core.judge0.Judge0SubmissionRequest;
+import com.dapcode.backend_core.repository.ProblemRepository;
+import com.dapcode.backend_core.repository.SubmissionRepository;
+import com.dapcode.backend_core.repository.TestCaseRepository;
+import com.dapcode.backend_core.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+public class SubmissionServiceImpl implements SubmissionService {
+
+    private final ProblemRepository problemRepository;
+    private final TestCaseRepository testCaseRepository;
+    private final SubmissionRepository submissionRepository;
+    private final UserRepository userRepository;
+    private final Judge0Client judge0Client;
+    private final SubmissionStreamManager streamManager;
+    private final CodeHarnessService codeHarnessService;
+
+    public SubmissionServiceImpl(
+            ProblemRepository problemRepository,
+            TestCaseRepository testCaseRepository,
+            SubmissionRepository submissionRepository,
+            UserRepository userRepository,
+            Judge0Client judge0Client,
+            SubmissionStreamManager streamManager,
+            CodeHarnessService codeHarnessService) {
+        this.problemRepository = problemRepository;
+        this.testCaseRepository = testCaseRepository;
+        this.submissionRepository = submissionRepository;
+        this.userRepository = userRepository;
+        this.judge0Client = judge0Client;
+        this.streamManager = streamManager;
+        this.codeHarnessService = codeHarnessService;
+    }
+
+    private record EvaluationSummary(
+            String finalStatus,
+            double totalRuntimeMs,
+            int maxMemoryKb,
+            int passedCount,
+            List<TestCaseResult> testCaseResults) {
+    }
+
+    private Problem findProblemBySlug(String slug) {
+        return problemRepository.findBySlug(slug).orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
+    }
+
+    private Users findUserById(UUID id) {
+        if (id == null) {
+            return null;
+        }
+        return userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private int resolveLanguageId(Integer requestedId, String code) {
+        if (code == null || code.isBlank()) {
+            return requestedId != null ? requestedId : 71;
+        }
+        String clean = code.replaceAll("(?s)/\\*.*?\\*/", "")
+                .replaceAll("(?m)//.*$", "")
+                .replaceAll("(?m)#.*$", "");
+        if (clean.contains("def ") && clean.contains("self") && !clean.contains("public:")
+                && !clean.contains("public ")) {
+            return 71;
+        }
+        if (clean.contains("public:") || clean.contains("vector<") || clean.contains("#include")) {
+            return 54;
+        }
+        if (!clean.contains("public:") && (clean.contains("public class ") || clean.contains("public int")
+                || clean.contains("public boolean") || clean.contains("public String")
+                || clean.contains("public List<"))) {
+            return 62;
+        }
+        return requestedId != null ? requestedId : 71;
+    }
+
+    private boolean isOutputMatched(String actual, String expected) {
+        String a = actual == null ? "" : actual.trim().replace("\r\n", "\n");
+        String e = expected == null ? "" : expected.trim().replace("\r\n", "\n");
+        if (a.equals(e)) {
+            return true;
+        }
+        String aNorm = a.replaceAll("\\s+", "").toLowerCase();
+        String eNorm = e.replaceAll("\\s+", "").toLowerCase();
+        if (aNorm.equals(eNorm)) {
+            return true;
+        }
+        java.util.Set<String> emptyEquivalents = java.util.Set.of("", "[]", "[[]]", "none", "null", "n/a", "\"\"",
+                "''");
+        if (emptyEquivalents.contains(aNorm) && emptyEquivalents.contains(eNorm)) {
+            return true;
+        }
+        aNorm = aNorm.replace("none", "null").replace("(", "[").replace(")", "]").replace(",]", "]");
+        eNorm = eNorm.replace("none", "null").replace("(", "[").replace(")", "]").replace(",]", "]");
+        if (aNorm.equals(eNorm)) {
+            return true;
+        }
+        String aUnquoted = aNorm.replaceAll("[\"'`]", "");
+        String eUnquoted = eNorm.replaceAll("[\"'`]", "");
+        if (aUnquoted.equals(eUnquoted)) {
+            return true;
+        }
+        try {
+            double da = Double.parseDouble(aUnquoted);
+            double de = Double.parseDouble(eUnquoted);
+            if (Math.abs(da - de) < 1e-5) {
+                return true;
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        if (aUnquoted.startsWith("[[") && aUnquoted.endsWith("]]")
+                && eUnquoted.startsWith("[[") && eUnquoted.endsWith("]]")) {
+            if (canonicalizeNestedArray(aUnquoted).equals(canonicalizeNestedArray(eUnquoted))) {
+                return true;
+            }
+        }
+        if (aUnquoted.startsWith("[") && aUnquoted.endsWith("]")
+                && eUnquoted.startsWith("[") && eUnquoted.endsWith("]")
+                && !aUnquoted.startsWith("[[") && !eUnquoted.startsWith("[[")) {
+            String[] aItems = aUnquoted.substring(1, aUnquoted.length() - 1).split(",");
+            String[] eItems = eUnquoted.substring(1, eUnquoted.length() - 1).split(",");
+            if (aItems.length == eItems.length && aItems.length > 0) {
+                boolean allFloatEqual = true;
+                for (int i = 0; i < aItems.length; i++) {
+                    try {
+                        if (Math.abs(Double.parseDouble(aItems[i]) - Double.parseDouble(eItems[i])) >= 1e-5) {
+                            allFloatEqual = false;
+                            break;
+                        }
+                    } catch (NumberFormatException ex) {
+                        allFloatEqual = false;
+                        break;
+                    }
+                }
+                if (allFloatEqual) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String canonicalizeNestedArray(String s) {
+        String inner = s.substring(1, s.length() - 1);
+        List<String> groups = new ArrayList<>();
+        int depth = 0;
+        int start = -1;
+        for (int i = 0; i < inner.length(); i++) {
+            char c = inner.charAt(i);
+            if (c == '[') {
+                if (depth == 0) {
+                    start = i;
+                }
+                depth++;
+            } else if (c == ']') {
+                depth--;
+                if (depth == 0 && start != -1) {
+                    String groupContent = inner.substring(start + 1, i);
+                    String[] items = groupContent.isEmpty() ? new String[0] : groupContent.split(",");
+                    java.util.Arrays.sort(items);
+                    groups.add("[" + String.join(",", items) + "]");
+                    start = -1;
+                }
+            }
+        }
+        java.util.Collections.sort(groups);
+        return "[" + String.join(",", groups) + "]";
+    }
+
+    private EvaluationSummary evalutateResults(List<TestCase> testCases, List<Judge0Response> judge0Responses,
+            UUID submissionId) {
+        List<TestCaseResult> testCaseResults = new ArrayList<>();
+
+        int passedCount = 0;
+
+        double totalRuntimeMs = 0.0;
+        int maxMemoryKb = 0;
+        String finalStatus = "ACCEPTED";
+
+        for (int i = 0; i < testCases.size(); i++) {
+            TestCase tc = testCases.get(i);
+            Judge0Response res = (i < judge0Responses.size()) ? judge0Responses.get(i) : null;
+
+            double timeMs = (res != null && res.getTime() != null) ? res.getTime() * 1000.0 : 0.0;
+
+            int memKb = (res != null && res.getMemory() != null) ? res.getMemory() : 0;
+            totalRuntimeMs += timeMs;
+            maxMemoryKb = Math.max(maxMemoryKb, memKb);
+
+            String caseStatus = "INTERNAL_ERROR";
+            if (res != null) {
+                Judge0Status jStatus = res.getJudge0Status();
+                if (jStatus == Judge0Status.ACCEPTED || jStatus == Judge0Status.WRONG_ANSWER) {
+                    if (isOutputMatched(res.getStdout(), tc.getExpectedOutput())) {
+                        caseStatus = "ACCEPTED";
+                        passedCount++;
+                    } else {
+                        caseStatus = "WRONG_ANSWER";
+                    }
+                } else {
+                    caseStatus = jStatus.name();
+                }
+            }
+
+            if (!"ACCEPTED".equals(caseStatus) && "ACCEPTED".equals(finalStatus)) {
+                finalStatus = caseStatus;
+            }
+
+            TestCaseResult tcResult = TestCaseResult.builder()
+                    .testCaseId(tc.getId())
+                    .status(caseStatus)
+                    .runtimeMs(timeMs)
+                    .memoryKb(memKb)
+                    .isHidden(tc.isHidden())
+                    .inputData(tc.isHidden() ? null : tc.getInputData())
+                    .expectedOutput(tc.isHidden() ? null : tc.getExpectedOutput())
+                    .actualOutput(tc.isHidden() ? null
+                            : (res != null ? (res.getStdout() != null ? res.getStdout() : "") : null))
+                    .errMes(res != null ? (res.getStderr() != null ? res.getStderr() : res.getCompile_output()) : null)
+                    .build();
+            testCaseResults.add(tcResult);
+
+            SubmissionProgressEvent progressEvent = SubmissionProgressEvent.builder().submissionId(submissionId)
+                    .currentTest(i + 1)
+                    .totalTests(testCases.size())
+                    .status(caseStatus)
+                    .runtimeMs(timeMs)
+                    .memoryKb(memKb)
+                    .message("Test case " + (i + 1) + "/" + testCases.size() + ": " + caseStatus)
+                    .build();
+
+            streamManager.sendProgress(submissionId, progressEvent);
+        }
+
+        return new EvaluationSummary(finalStatus, totalRuntimeMs, maxMemoryKb, passedCount, testCaseResults);
+
+    }
+
+    @Override
+    @Transactional
+    public SubmissionResponse submitAndEvaluate(SubmitCodeRequest request) {
+        Problem prob = findProblemBySlug(request.getProblemSlug());
+
+        List<TestCase> testCases = testCaseRepository.findByProblemId(prob.getId());
+        if (testCases.isEmpty()) {
+            throw new AppException(ErrorCode.TEST_CASE_NOT_FOUND);
+        }
+
+        Users user = findUserById(request.getUserId());
+
+        int resolvedLanguageId = resolveLanguageId(request.getLanguageId(), request.getSourceCode());
+
+        Submission submission = Submission.builder()
+                .problem(prob)
+                .user(user)
+                .languageId(resolvedLanguageId)
+                .sourceCode(request.getSourceCode())
+                .status("PENDING")
+                .build();
+        submission = submissionRepository.save(submission);
+
+        String preparedCode = codeHarnessService.prepareSourceCode(
+                prob.getSlug(),
+                resolvedLanguageId,
+                request.getSourceCode());
+
+        List<Judge0SubmissionRequest> judge0SubmissionRequests = testCases.stream()
+                .map(tc -> Judge0SubmissionRequest.builder()
+                        .language_id(resolvedLanguageId)
+                        .source_code(preparedCode)
+                        .stdin(tc.getInputData())
+                        .expected_output(tc.getExpectedOutput())
+                        .cpu_time_limit(prob.getTimeLimitMs() / 1000.0)
+                        .memory_limit(resolvedLanguageId == 62
+                                ? Math.max(prob.getMemoryLimitKb(), 1048576)
+                                : prob.getMemoryLimitKb())
+                        .build())
+                .toList();
+
+        List<Judge0Response> judge0Responses = judge0Client.executeBatch(judge0SubmissionRequests);
+
+        EvaluationSummary summary = evalutateResults(testCases, judge0Responses, submission.getId());
+
+        int xpEarned = 0;
+        if ("ACCEPTED".equals(summary.finalStatus()) && user != null) {
+
+            boolean daGiai = submissionRepository.existsByUserIdAndProblemIdAndStatus(user.getId(), prob.getId(),
+                    "ACCEPTED");
+            if (!daGiai) {
+                xpEarned = switch (prob.getDifficulty().toLowerCase()) {
+                    case "easy" -> 20;
+                    case "medium" -> 50;
+                    case "hard" -> 100;
+                    default -> 20;
+                };
+                user.setXp(user.getXp() + xpEarned);
+            }
+            ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
+            LocalDate today = LocalDate.now(zone);
+            var lastAcceptedOpt = submissionRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(),
+                    "ACCEPTED");
+
+            if (lastAcceptedOpt.isEmpty() || lastAcceptedOpt.get().getCreatedAt() == null) {
+                user.setStreakCount(1);
+            } else {
+                LocalDate lastDate = lastAcceptedOpt.get().getCreatedAt().atZone(zone).toLocalDate();
+                if (lastDate.equals(today)) {
+                    if (user.getStreakCount() <= 0) {
+                        user.setStreakCount(1);
+                    }
+                } else if (lastDate.equals(today.minusDays(1))) {
+                    user.setStreakCount(user.getStreakCount() + 1);
+                } else {
+                    user.setStreakCount(1);
+                }
+            }
+            userRepository.save(user);
+        }
+
+        submission.setStatus(summary.finalStatus());
+
+        submission.setTotalRuntimeMs(summary.totalRuntimeMs());
+
+        submission.setMaxMemoryKb(summary.maxMemoryKb());
+
+        submissionRepository.save(submission);
+
+        SubmissionResponse response = SubmissionResponse.builder()
+                .submissionId(submission.getId())
+                .slug(prob.getSlug())
+                .status(summary.finalStatus())
+                .totalRuntimeMs((int) summary.totalRuntimeMs())
+                .maxMemoryKb(summary.maxMemoryKb())
+                .passedTestCases(summary.passedCount())
+                .xpEarned(xpEarned)
+                .currentStreak(user != null ? user.getStreakCount() : 0)
+                .testCaseResults(summary.testCaseResults())
+                .build();
+
+        streamManager.sendCompleted(submission.getId(), response);
+
+        return response;
+    }
+
+    @Override
+    public SseEmitter subscribeStream(UUID submissionId, Users currUser) {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new AppException(ErrorCode.SUBMISSION_NOT_FOUND));
+
+        if (currUser != null && !currUser.getId().equals(submission.getUser().getId())
+                && !"ROLE_ADMIN".equals(currUser.getRole())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        SseEmitter emitter = streamManager.createEmitter(submissionId);
+
+        if (!"PENDING".equals(submission.getStatus())) {
+            SubmissionDetailResponse detail = SubmissionDetailResponse.builder()
+                    .id(submission.getId())
+                    .problemSlug(submission.getProblem().getSlug())
+                    .problemTitle(submission.getProblem().getTitle())
+                    .status(submission.getStatus())
+                    .sourceCode(submission.getSourceCode())
+                    .languageId(submission.getLanguageId())
+                    .totalRuntimeMs(submission.getTotalRuntimeMs())
+                    .maxMemoryKb(submission.getMaxMemoryKb())
+                    .createdAt(submission.getCreatedAt())
+                    .build();
+            streamManager.sendCompleted(submissionId, detail);
+        }
+        return emitter;
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SubmissionDetailResponse getSubmissionById(UUID id, Users currUser) {
+        Submission submission = submissionRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.SUBMISSION_NOT_FOUND));
+
+        if (currUser != null && !currUser.getId().equals(submission.getUser().getId())
+                && !"ROLE_ADMIN".equals(currUser.getRole())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        return SubmissionDetailResponse.builder().id(submission.getId())
+                .problemSlug(submission.getProblem().getSlug())
+                .problemTitle(submission.getProblem().getTitle())
+                .status(submission.getStatus())
+                .sourceCode(submission.getSourceCode())
+                .languageId(submission.getLanguageId())
+                .totalRuntimeMs(submission.getTotalRuntimeMs())
+                .maxMemoryKb(submission.getMaxMemoryKb())
+                .createdAt(submission.getCreatedAt()).build();
+    }
+
+    @Override
+    public List<String> getSolvedProblemSlugs(UUID userId) {
+        if (userId == null) {
+            return List.of();
+        }
+        return submissionRepository.findSolvedProblemSlugsByUserId(userId);
+    }
+
+}

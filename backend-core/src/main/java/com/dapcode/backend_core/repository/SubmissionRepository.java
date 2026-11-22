@@ -2,6 +2,7 @@ package com.dapcode.backend_core.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,4 +30,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
             GROUP BY TO_CHAR(created_at, 'YYYY-MM-DD')
             """, nativeQuery = true)
     List<DailySubmissionProjection> countSubmissionsGroupedByDate(@Param("startDate") Instant startDate);
+
+    @Query("SELECT DISTINCT s.problem.slug FROM Submission s WHERE s.user.id = :userId AND s.status = 'ACCEPTED'")
+    List<String> findSolvedProblemSlugsByUserId(@Param("userId") UUID userId);
+
+    boolean existsByUserIdAndProblemIdAndStatus(UUID userId, UUID problemId, String status);
+
+    Optional<Submission> findFirstByUserIdAndStatusOrderByCreatedAtDesc(UUID userId, String status);
 }

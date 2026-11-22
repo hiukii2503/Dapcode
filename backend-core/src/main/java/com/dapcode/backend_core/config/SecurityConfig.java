@@ -50,7 +50,10 @@ public class SecurityConfig {
                                                                 "/swagger-ui.html")
                                                 .permitAll()
                                                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/submissions/**").permitAll()
                                                 .requestMatchers("/api/v1/users/me").authenticated()
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/submissions/**")
+                                                .authenticated()
                                                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                                                 .anyRequest().authenticated())
                                 .oauth2Login(oauth2 -> oauth2
