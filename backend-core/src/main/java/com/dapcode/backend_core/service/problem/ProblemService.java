@@ -12,24 +12,24 @@ import com.dapcode.backend_core.dto.problem.ProblemSummaryResponse;
 
 public interface ProblemService {
 
-    PageResponse<ProblemSummaryResponse> getProblems(
-            String category,
-            String difficulty,
-            String search,
-            Pageable pageable);
+        PageResponse<ProblemSummaryResponse> getProblems(
+                        String category,
+                        String difficulty,
+                        String search,
+                        Pageable pageable);
 
-    ProblemDetailResponse getProblemBySlug(String slug);
+        ProblemDetailResponse getProblemBySlug(String slug);
 
-    ProblemDetailResponse createProblem(CreateProblemRequest req);
+        ProblemDetailResponse createProblem(CreateProblemRequest req);
 
-    ProblemDetailResponse updateProblem(UUID id, UpdateProblemRequest req);
+        ProblemDetailResponse updateProblem(UUID id, UpdateProblemRequest req);
 
-    void deleteProblem(UUID id);
+        void deleteProblem(UUID id);
 
-    PageResponse<ProblemSummaryResponse> getAdminProblems(
-            String category,
-            String difficulty,
-            String search,
-            Boolean isPublished,
-            Pageable pageable);
+        PageResponse<ProblemSummaryResponse> getAdminProblems(
+                        String category,
+                        String difficulty,
+                        String search,
+                        Boolean isPublished,
+                        Pageable pageable);
 }

@@ -1,5 +1,6 @@
 package com.dapcode.backend_core.dto.admin;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class UpdateTheoryRequest {
     private String summary;
 
     @NotBlank(message = "Nội dung Markdown không được để trống")
+    @JsonAlias({"content", "contentMarkdown"})
     private String contentMarkdown;
 
     private Integer orderIndex;

@@ -65,9 +65,9 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
         slug: theory.slug || '',
         category: theory.category || '',
         summary: theory.summary || '',
-        content: theory.content || '',
+        content: theory.contentMarkdown || theory.content || '',
         orderIndex: theory.orderIndex ?? 0,
-        isPublished: theory.published ?? true,
+        isPublished: theory.published ?? theory.isPublished ?? true,
       });
     } else {
       setForm(emptyForm);
@@ -97,6 +97,7 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
         category: form.category.trim() || 'General',
         summary: form.summary.trim(),
         content: form.content,
+        contentMarkdown: form.content,
         orderIndex: Number(form.orderIndex) || 0,
         isPublished: form.isPublished,
       };

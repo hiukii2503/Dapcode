@@ -7,12 +7,12 @@ import java.util.UUID;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dapcode.backend_core.common.ErrorCode;
+import com.dapcode.backend_core.dao.ProblemDAO;
 import com.dapcode.backend_core.dto.admin.CreateProblemRequest;
 import com.dapcode.backend_core.dto.admin.UpdateProblemRequest;
 import com.dapcode.backend_core.dto.common.PageResponse;
@@ -21,17 +21,20 @@ import com.dapcode.backend_core.dto.problem.ProblemSummaryResponse;
 import com.dapcode.backend_core.entity.Problem;
 import com.dapcode.backend_core.entity.TestCase;
 import com.dapcode.backend_core.exception.AppException;
-import com.dapcode.backend_core.repository.ProblemRepository;
 import com.dapcode.backend_core.repository.TestCaseRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Service quản lý bài tập sử dụng trực tiếp tầng ProblemDAO kết hợp HikariCP Connection Pooling.
+ * Tầng Controller giữ nguyên DTO và validation chuẩn để tối ưu trải nghiệm và bảo mật.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProblemServiceImpl implements ProblemService {
 
-        private final ProblemRepository problemRepository;
+        private final ProblemDAO problemDAO;
         private final TestCaseRepository testCaseRepository;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -46,10 +49,15 @@ public class ProblemServiceImpl implements ProblemService {
                 String cleanDifficulty = (difficulty != null && !difficulty.isBlank()) ? difficulty.trim() : null;
                 String cleanSearch = (search != null && !search.isBlank()) ? search.trim() : null;
 
-                Page<Problem> problemPage = problemRepository.findProblemsWithFilters(
-                                cleanCategory, cleanDifficulty, cleanSearch, pageable);
+                int page = pageable.getPageNumber();
+                int size = pageable.getPageSize() > 0 ? pageable.getPageSize() : 20;
 
-                List<ProblemSummaryResponse> content = problemPage.getContent().stream()
+                // Sử dụng ProblemDAO với HikariCP để tìm kiếm, lọc và phân trang
+                List<Problem> problems = problemDAO.findWithFilters(cleanCategory, cleanDifficulty, cleanSearch, page, size);
+                long totalElements = problemDAO.countWithFilters(cleanCategory, cleanDifficulty, cleanSearch);
+                int totalPages = size > 0 ? (int) Math.ceil((double) totalElements / size) : 0;
+
+                List<ProblemSummaryResponse> content = problems.stream()
                                 .map(p -> ProblemSummaryResponse.builder()
                                                 .id(p.getId())
                                                 .slug(p.getSlug())
@@ -61,18 +69,19 @@ public class ProblemServiceImpl implements ProblemService {
 
                 return PageResponse.<ProblemSummaryResponse>builder()
                                 .content(content)
-                                .page(problemPage.getNumber())
-                                .size(problemPage.getSize())
-                                .totalElements(problemPage.getTotalElements())
-                                .totalPages(problemPage.getTotalPages())
-                                .isFirst(problemPage.isFirst())
-                                .isLast(problemPage.isLast())
+                                .page(page)
+                                .size(size)
+                                .totalElements(totalElements)
+                                .totalPages(totalPages)
+                                .isFirst(page == 0)
+                                .isLast(totalPages == 0 || page >= totalPages - 1)
                                 .build();
         }
 
         @Override
         public ProblemDetailResponse getProblemBySlug(String slug) {
-                Problem problem = problemRepository.findBySlug(slug)
+                // Lấy bài tập qua DAO
+                Problem problem = problemDAO.findBySlug(slug)
                                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
 
                 List<TestCase> publicTestCases = testCaseRepository.findByProblemIdAndIsHiddenFalse(problem.getId());
@@ -136,7 +145,7 @@ public class ProblemServiceImpl implements ProblemService {
                         slug = toSlug(slug);
                 }
 
-                if (problemRepository.existsBySlug(slug)) {
+                if (problemDAO.existsBySlug(slug)) {
                         slug = slug + "-" + UUID.randomUUID().toString().substring(0, 6);
                 }
 
@@ -152,15 +161,18 @@ public class ProblemServiceImpl implements ProblemService {
                                 .isPublished(req.isPublished())
                                 .build();
 
-                problem = problemRepository.save(problem);
+                Problem inserted = problemDAO.insert(problem);
+                if (inserted == null) {
+                        throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                }
 
-                return getProblemBySlug(problem.getSlug());
+                return getProblemBySlug(inserted.getSlug());
         }
 
         @Override
         @Transactional
         public ProblemDetailResponse updateProblem(UUID id, UpdateProblemRequest req) {
-                Problem problem = problemRepository.findById(id)
+                Problem problem = problemDAO.findById(id)
                                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
 
                 problem.setTitle(req.getTitle().trim());
@@ -181,16 +193,19 @@ public class ProblemServiceImpl implements ProblemService {
                 if (req.getIsPublished() != null) {
                         problem.setPublished(req.getIsPublished());
                 }
-                Problem updated = problemRepository.save(problem);
+                Problem updated = problemDAO.update(problem);
+                if (updated == null) {
+                        throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+                }
                 return getProblemBySlug(updated.getSlug());
         }
 
         @Override
         @Transactional
         public void deleteProblem(UUID id) {
-                Problem problem = problemRepository.findById(id)
+                Problem problem = problemDAO.findById(id)
                                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
-                problemRepository.delete(problem);
+                problemDAO.delete(problem.getId());
         }
 
         @Override

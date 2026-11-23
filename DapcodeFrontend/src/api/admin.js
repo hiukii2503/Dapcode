@@ -7,7 +7,7 @@ export const errMsg = (err, fallback = 'Đã có lỗi xảy ra') =>
 
 const normUser = (u) => ({ ...u, active: u.active ?? u.isActive ?? true });
 const normCase = (t) => ({ ...t, hidden: t.hidden ?? t.isHidden ?? false });
-const normTheory = (t) => ({ ...t, published: t.published ?? t.isPublished ?? true });
+const normTheory = (t) => ({ ...t, published: t.published ?? t.isPublished ?? true, content: t.contentMarkdown ?? t.content ?? '' });
 const normPage = (p, fn) => ({ ...p, content: (p?.content || []).map(fn || ((x) => x)) });
 
 export const getDashboardStats = async () => unwrap(await api.get('/admin/dashboard/stats'));

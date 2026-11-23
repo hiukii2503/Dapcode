@@ -19,12 +19,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.dapcode.backend_core.common.ErrorCode;
+import com.dapcode.backend_core.dao.ProblemDAO;
 import com.dapcode.backend_core.dto.admin.CreateProblemRequest;
 import com.dapcode.backend_core.dto.admin.UpdateProblemRequest;
 import com.dapcode.backend_core.dto.problem.ProblemDetailResponse;
 import com.dapcode.backend_core.entity.Problem;
 import com.dapcode.backend_core.exception.AppException;
-import com.dapcode.backend_core.repository.ProblemRepository;
 import com.dapcode.backend_core.repository.TestCaseRepository;
 import com.dapcode.backend_core.service.problem.ProblemServiceImpl;
 
@@ -32,7 +32,7 @@ import com.dapcode.backend_core.service.problem.ProblemServiceImpl;
 public class ProblemServiceTest {
 
     @Mock
-    private ProblemRepository problemRepository;
+    private ProblemDAO problemDAO;
 
     @Mock
     private TestCaseRepository testCaseRepository;
@@ -72,9 +72,9 @@ public class ProblemServiceTest {
                 .isPublished(true)
                 .build();
 
-        when(problemRepository.existsBySlug("two-sum")).thenReturn(false);
-        when(problemRepository.save(any(Problem.class))).thenReturn(sampleProblem);
-        when(problemRepository.findBySlug("two-sum")).thenReturn(Optional.of(sampleProblem));
+        when(problemDAO.existsBySlug("two-sum")).thenReturn(false);
+        when(problemDAO.insert(any(Problem.class))).thenReturn(sampleProblem);
+        when(problemDAO.findBySlug("two-sum")).thenReturn(Optional.of(sampleProblem));
         when(testCaseRepository.findByProblemIdAndIsHiddenFalse(sampleId)).thenReturn(Collections.emptyList());
 
         ProblemDetailResponse res = problemService.createProblem(req);
@@ -82,7 +82,7 @@ public class ProblemServiceTest {
         assertNotNull(res);
         assertEquals("Two Sum", res.getTitle());
         assertEquals("EASY", res.getDifficulty());
-        verify(problemRepository).save(any(Problem.class));
+        verify(problemDAO).insert(any(Problem.class));
     }
 
     @Test
@@ -97,29 +97,29 @@ public class ProblemServiceTest {
                 .isPublished(true)
                 .build();
 
-        when(problemRepository.findById(sampleId)).thenReturn(Optional.of(sampleProblem));
-        when(problemRepository.save(any(Problem.class))).thenReturn(sampleProblem);
-        when(problemRepository.findBySlug(sampleProblem.getSlug())).thenReturn(Optional.of(sampleProblem));
+        when(problemDAO.findById(sampleId)).thenReturn(Optional.of(sampleProblem));
+        when(problemDAO.update(any(Problem.class))).thenReturn(sampleProblem);
+        when(problemDAO.findBySlug(sampleProblem.getSlug())).thenReturn(Optional.of(sampleProblem));
         when(testCaseRepository.findByProblemIdAndIsHiddenFalse(sampleId)).thenReturn(Collections.emptyList());
 
         ProblemDetailResponse res = problemService.updateProblem(sampleId, req);
 
         assertNotNull(res);
-        verify(problemRepository).save(sampleProblem);
+        verify(problemDAO).update(sampleProblem);
     }
 
     @Test
     void testDeleteProblem_Success() {
-        when(problemRepository.findById(sampleId)).thenReturn(Optional.of(sampleProblem));
+        when(problemDAO.findById(sampleId)).thenReturn(Optional.of(sampleProblem));
 
         problemService.deleteProblem(sampleId);
 
-        verify(problemRepository).delete(sampleProblem);
+        verify(problemDAO).delete(sampleProblem.getId());
     }
 
     @Test
     void testGetProblemBySlug_NotFound() {
-        when(problemRepository.findBySlug("unknown-slug")).thenReturn(Optional.empty());
+        when(problemDAO.findBySlug("unknown-slug")).thenReturn(Optional.empty());
 
         AppException ex = assertThrows(AppException.class,
                 () -> problemService.getProblemBySlug("unknown-slug"));

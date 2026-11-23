@@ -102,8 +102,34 @@ public class ProblemDAOImpl implements ProblemDAO {
         return false;
     }
 
+    private void validateProblem(Problem problem) {
+        if (problem == null) {
+            throw new IllegalArgumentException("Dữ liệu bài tập không được rỗng!");
+        }
+        if (problem.getTitle() == null || problem.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tiêu đề bài tập không được để trống!");
+        }
+        if (problem.getTitle().length() > 200) {
+            throw new IllegalArgumentException("Tiêu đề tối đa 200 ký tự!");
+        }
+        if (problem.getDifficulty() == null || problem.getDifficulty().trim().isEmpty()) {
+            throw new IllegalArgumentException("Độ khó không được để trống!");
+        }
+        if (problem.getDescriptionMarkdown() == null || problem.getDescriptionMarkdown().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mô tả đề bài không được để trống!");
+        }
+        if (problem.getTimeLimitMs() <= 0) {
+            problem.setTimeLimitMs(2000);
+        }
+        if (problem.getMemoryLimitKb() <= 0) {
+            problem.setMemoryLimitKb(262144);
+        }
+    }
+
     @Override
     public Problem insert(Problem problem) {
+        validateProblem(problem);
+
         String sql = """
                 INSERT INTO problems (id, slug, title, difficulty, category, description_markdown, time_limit_ms, memory_limit_kb, starter_code, is_published, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -141,6 +167,8 @@ public class ProblemDAOImpl implements ProblemDAO {
 
     @Override
     public Problem update(Problem problem) {
+        validateProblem(problem);
+
         String sql = """
                 UPDATE problems
                 SET title = ?, difficulty = ?, category = ?, description_markdown = ?, time_limit_ms = ?, memory_limit_kb = ?, starter_code = ?, is_published = ?, updated_at = ?
@@ -182,5 +210,84 @@ public class ProblemDAOImpl implements ProblemDAO {
             log.error("Lỗi khi delete problem: {}", e.getMessage());
         }
         return false;
+    }
+
+    @Override
+    public List<Problem> findWithFilters(String category, String difficulty, String search, int page, int size) {
+        List<Problem> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM problems WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+
+        if (category != null && !category.isBlank()) {
+            sql.append("AND LOWER(category) = LOWER(?) ");
+            params.add(category.trim());
+        }
+        if (difficulty != null && !difficulty.isBlank()) {
+            sql.append("AND LOWER(difficulty) = LOWER(?) ");
+            params.add(difficulty.trim());
+        }
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(title) LIKE LOWER(?) OR LOWER(slug) LIKE LOWER(?)) ");
+            String keyword = "%" + search.trim() + "%";
+            params.add(keyword);
+            params.add(keyword);
+        }
+
+        sql.append("ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        int pageSize = size > 0 ? size : 20;
+        int pageIndex = Math.max(page, 0);
+        params.add(pageSize);
+        params.add(pageIndex * pageSize);
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToProblem(rs));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Lỗi khi findWithFilters problem: {}", e.getMessage(), e);
+        }
+        return list;
+    }
+
+    @Override
+    public long countWithFilters(String category, String difficulty, String search) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM problems WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+
+        if (category != null && !category.isBlank()) {
+            sql.append("AND LOWER(category) = LOWER(?) ");
+            params.add(category.trim());
+        }
+        if (difficulty != null && !difficulty.isBlank()) {
+            sql.append("AND LOWER(difficulty) = LOWER(?) ");
+            params.add(difficulty.trim());
+        }
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(title) LIKE LOWER(?) OR LOWER(slug) LIKE LOWER(?)) ");
+            String keyword = "%" + search.trim() + "%";
+            params.add(keyword);
+            params.add(keyword);
+        }
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Lỗi khi countWithFilters problem: {}", e.getMessage(), e);
+        }
+        return 0;
     }
 }

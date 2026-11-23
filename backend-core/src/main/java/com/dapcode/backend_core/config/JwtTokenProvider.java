@@ -30,7 +30,11 @@ public class JwtTokenProvider {
     private long jwtExpiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes = (jwtSecret != null) ? jwtSecret.getBytes(StandardCharsets.UTF_8) : new byte[0];
+        if (keyBytes.length < 32) {
+            log.warn("JWT secret key is shorter than 256 bits ({} bytes). Using fallback secure key.", keyBytes.length);
+            keyBytes = "K7vQ8zP2mR4wX9yL1tN5bC0fG3jH6kE8sA1dF4gJ7hL=".getBytes(StandardCharsets.UTF_8);
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
