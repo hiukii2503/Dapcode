@@ -26,8 +26,10 @@ import com.dapcode.backend_core.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Service quản lý bài tập sử dụng trực tiếp tầng ProblemDAO kết hợp HikariCP Connection Pooling.
- * Tầng Controller giữ nguyên DTO và validation chuẩn để tối ưu trải nghiệm và bảo mật.
+ * Service quản lý bài tập sử dụng trực tiếp tầng ProblemDAO kết hợp HikariCP
+ * Connection Pooling.
+ * Tầng Controller giữ nguyên DTO và validation chuẩn để tối ưu trải nghiệm và
+ * bảo mật.
  */
 @Service
 @RequiredArgsConstructor
@@ -52,8 +54,8 @@ public class ProblemServiceImpl implements ProblemService {
                 int page = pageable.getPageNumber();
                 int size = pageable.getPageSize() > 0 ? pageable.getPageSize() : 20;
 
-                // Sử dụng ProblemDAO với HikariCP để tìm kiếm, lọc và phân trang
-                List<Problem> problems = problemDAO.findWithFilters(cleanCategory, cleanDifficulty, cleanSearch, page, size);
+                List<Problem> problems = problemDAO.findWithFilters(cleanCategory, cleanDifficulty, cleanSearch, page,
+                                size);
                 long totalElements = problemDAO.countWithFilters(cleanCategory, cleanDifficulty, cleanSearch);
                 int totalPages = size > 0 ? (int) Math.ceil((double) totalElements / size) : 0;
 

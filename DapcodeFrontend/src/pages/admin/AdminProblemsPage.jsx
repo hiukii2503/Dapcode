@@ -290,7 +290,7 @@ export default function AdminProblemsPage() {
         const items = res?.data?.content || res?.content || res?.data || [];
         setCategories([...new Set(items.map((p) => p.category).filter(Boolean))]);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -309,7 +309,6 @@ export default function AdminProblemsPage() {
       .then(setData)
       .catch((e) => toast.push('error', errMsg(e, 'Không tải được danh sách bài tập')))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, q, difficulty, category]);
 
   useEffect(() => {
