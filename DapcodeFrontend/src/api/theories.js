@@ -2,6 +2,13 @@ import api from './client';
 
 let allTheoriesCache = null;
 let theoryCategoriesCache = null;
+const theoryDetailCache = new Map();
+
+export const clearTheoriesCache = () => {
+  allTheoriesCache = null;
+  theoryCategoriesCache = null;
+  theoryDetailCache.clear();
+};
 
 export const getTheories = async (category) => {
   if (!category && allTheoriesCache) {
@@ -30,5 +37,12 @@ export const getTheoryCategories = async () => {
 };
 
 export const getTheoryBySlug = async (slug) => {
-  return await api.get(`/theories/${slug}`);
+  if (slug && theoryDetailCache.has(slug)) {
+    return theoryDetailCache.get(slug);
+  }
+  const res = await api.get(`/theories/${slug}`);
+  if (slug && res) {
+    theoryDetailCache.set(slug, res);
+  }
+  return res;
 };

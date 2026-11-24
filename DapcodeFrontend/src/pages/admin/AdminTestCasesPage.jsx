@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Spinner as BsSpinner } from 'react-bootstrap';
-import { Plus, Upload, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Upload, Pencil, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import {
   getTestCases,
   createTestCase,
@@ -23,7 +22,6 @@ import {
   Empty,
   useToast,
   inputCls,
-  selectCls,
   btnPrimary,
   btnGhost,
   iconBtn,
@@ -67,17 +65,16 @@ function CaseDialog({ open, initial, onClose, onSubmit }) {
             disabled={saving || !form.inputData.trim() || !form.expectedOutput.trim()}
             onClick={submit}
           >
-            {saving && <BsSpinner animation="border" size="sm" />}
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             Lưu
           </button>
         </>
       }
     >
-      <div className="d-flex flex-column gap-3">
+      <div className="space-y-4">
         <Field label="Dữ liệu đầu vào (input) *">
           <textarea
-            className={`${inputCls} font-monospace fs-xs`}
-            style={{ height: 112, resize: 'none' }}
+            className={`${inputCls} h-28 resize-none font-mono text-[13px]`}
             value={form.inputData}
             onChange={(e) => setForm({ ...form, inputData: e.target.value })}
             spellCheck={false}
@@ -85,8 +82,7 @@ function CaseDialog({ open, initial, onClose, onSubmit }) {
         </Field>
         <Field label="Kết quả kỳ vọng (expected output) *">
           <textarea
-            className={`${inputCls} font-monospace fs-xs`}
-            style={{ height: 112, resize: 'none' }}
+            className={`${inputCls} h-28 resize-none font-mono text-[13px]`}
             value={form.expectedOutput}
             onChange={(e) => setForm({ ...form, expectedOutput: e.target.value })}
             spellCheck={false}
@@ -153,28 +149,27 @@ function BatchDialog({ open, onClose, onSubmit }) {
             Hủy
           </button>
           <button type="button" className={btnPrimary} disabled={saving || !parsed.list.length} onClick={submit}>
-            {saving && <BsSpinner animation="border" size="sm" />}
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             Import {parsed.list.length ? `${parsed.list.length} test case` : ''}
           </button>
         </>
       }
     >
-      <div className="d-flex flex-column gap-3">
-        <p className="mb-0 text-body-secondary">
-          Dán một mảng JSON gồm các đối tượng <code className="font-monospace">inputData</code>,{' '}
-          <code className="font-monospace">expectedOutput</code>, <code className="font-monospace">hidden</code>.
+      <div className="space-y-3">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          Dán một mảng JSON gồm các đối tượng <code className="font-mono">inputData</code>,{' '}
+          <code className="font-mono">expectedOutput</code>, <code className="font-mono">hidden</code>.
         </p>
         <textarea
-          className={`${inputCls} font-monospace fs-xs`}
-          style={{ height: 256, resize: 'none' }}
+          className={`${inputCls} h-64 resize-none font-mono text-[13px]`}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={BATCH_SAMPLE}
           spellCheck={false}
         />
-        {parsed.error && <p className="mb-0 text-danger">{parsed.error}</p>}
+        {parsed.error && <p className="text-sm text-[#EF4743]">{parsed.error}</p>}
         {!parsed.error && parsed.list.length > 0 && (
-          <p className="mb-0 text-success">Hợp lệ: {parsed.list.length} test case sẽ được thêm.</p>
+          <p className="text-sm text-[#2CBB5D]">Hợp lệ: {parsed.list.length} test case sẽ được thêm.</p>
         )}
       </div>
     </Dialog>
@@ -266,11 +261,11 @@ export default function AdminTestCasesPage() {
           problemId && (
             <>
               <button type="button" className={btnGhost} onClick={() => setBatchOpen(true)}>
-                <Upload size={16} />
+                <Upload className="h-4 w-4" />
                 Import JSON
               </button>
               <button type="button" className={btnPrimary} onClick={() => setDialog({ open: true, item: null })}>
-                <Plus size={16} />
+                <Plus className="h-4 w-4" />
                 Thêm test case
               </button>
             </>
@@ -278,11 +273,10 @@ export default function AdminTestCasesPage() {
         }
       />
 
-      <Card className="mb-3 p-3">
-        <div className="d-flex flex-wrap align-items-center gap-3">
+      <Card className="mb-4 p-4">
+        <div className="flex flex-wrap items-center gap-3">
           <select
-            className={`${selectCls} flex-grow-1`}
-            style={{ maxWidth: 448 }}
+            className={`${inputCls} max-w-md flex-1`}
             value={problemId}
             onChange={(e) => (e.target.value ? setParams({ problemId: e.target.value }) : setParams({}))}
           >
@@ -294,7 +288,7 @@ export default function AdminTestCasesPage() {
             ))}
           </select>
           {problemId && !loading && (
-            <div className="d-flex align-items-center gap-2 text-body-secondary">
+            <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
               <Badge>{cases.length} test case</Badge>
               <Badge tone="orange">{hiddenCount} ẩn</Badge>
               <Badge tone="green">{cases.length - hiddenCount} công khai</Badge>
@@ -316,45 +310,41 @@ export default function AdminTestCasesPage() {
           </Empty>
         </Card>
       ) : (
-        <div className="d-flex flex-column gap-3">
+        <div className="space-y-3">
           {cases.map((c, i) => (
-            <Card key={c.id} className="p-3">
-              <div className="mb-3 d-flex align-items-center justify-content-between">
-                <div className="d-flex align-items-center gap-2">
-                  <span className="fw-semibold">Case {i + 1}</span>
+            <Card key={c.id} className="p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold">Case {i + 1}</span>
                   {c.hidden ? (
                     <Badge tone="orange">
-                      <EyeOff size={12} className="me-1 align-text-bottom" />
+                      <EyeOff className="mr-1 h-3 w-3" />
                       Ẩn
                     </Badge>
                   ) : (
                     <Badge tone="green">
-                      <Eye size={12} className="me-1 align-text-bottom" />
+                      <Eye className="mr-1 h-3 w-3" />
                       Công khai
                     </Badge>
                   )}
                 </div>
-                <div className="d-flex gap-1">
+                <div className="flex gap-0.5">
                   <button type="button" className={iconBtn} title="Chỉnh sửa" onClick={() => setDialog({ open: true, item: c })}>
-                    <Pencil size={16} />
+                    <Pencil className="h-4 w-4" />
                   </button>
-                  <button type="button" className={`${iconBtn} icon-btn-danger`} title="Xóa" onClick={() => setToDelete(c)}>
-                    <Trash2 size={16} />
+                  <button type="button" className={`${iconBtn} hover:!text-[#EF4743]`} title="Xóa" onClick={() => setToDelete(c)}>
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
-              <div className="row g-3">
-                <div className="col-12 col-md-6">
-                  <div className="mb-1 fs-xs text-body-secondary">Input</div>
-                  <pre className="mb-0 overflow-auto rounded-2 bg-body-tertiary p-3 font-monospace fs-xs" style={{ maxHeight: 160 }}>
-                    {c.inputData}
-                  </pre>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <div className="mb-1 text-xs text-neutral-500 dark:text-neutral-400">Input</div>
+                  <pre className="max-h-40 overflow-auto rounded-lg bg-[#F7F8FA] p-3 font-mono text-[13px] dark:bg-[#333333]">{c.inputData}</pre>
                 </div>
-                <div className="col-12 col-md-6">
-                  <div className="mb-1 fs-xs text-body-secondary">Expected output</div>
-                  <pre className="mb-0 overflow-auto rounded-2 bg-body-tertiary p-3 font-monospace fs-xs" style={{ maxHeight: 160 }}>
-                    {c.expectedOutput}
-                  </pre>
+                <div>
+                  <div className="mb-1 text-xs text-neutral-500 dark:text-neutral-400">Expected output</div>
+                  <pre className="max-h-40 overflow-auto rounded-lg bg-[#F7F8FA] p-3 font-mono text-[13px] dark:bg-[#333333]">{c.expectedOutput}</pre>
                 </div>
               </div>
             </Card>

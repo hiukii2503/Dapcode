@@ -20,7 +20,6 @@ import {
   Badge,
   useToast,
   inputCls,
-  selectCls,
   btnPrimary,
   btnGhost,
   iconBtn,
@@ -41,7 +40,7 @@ function slugify(text) {
     .toString()
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[đĐ]/g, 'd')
     .replace(/[^a-z0-9 -]/g, '')
     .trim()
@@ -65,9 +64,9 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
         slug: theory.slug || '',
         category: theory.category || '',
         summary: theory.summary || '',
-        content: theory.contentMarkdown || theory.content || '',
+        content: theory.content || '',
         orderIndex: theory.orderIndex ?? 0,
-        isPublished: theory.published ?? theory.isPublished ?? true,
+        isPublished: theory.published ?? true,
       });
     } else {
       setForm(emptyForm);
@@ -97,7 +96,6 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
         category: form.category.trim() || 'General',
         summary: form.summary.trim(),
         content: form.content,
-        contentMarkdown: form.content,
         orderIndex: Number(form.orderIndex) || 0,
         isPublished: form.isPublished,
       };
@@ -116,64 +114,54 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
     }
   };
 
-  const tabCls = (t) => `nav-link cursor-pointer ${tab === t ? 'active' : ''}`;
-
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title={isEdit ? 'Chỉnh sửa bài học lý thuyết' : 'Tạo bài học lý thuyết mới'}
-      size="lg"
+      maxWidth="max-w-3xl"
     >
-      <div className="d-flex flex-column gap-3">
-        <div className="row g-3">
-          <div className="col-12 col-sm-6">
-            <Field label="Tiêu đề" required>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder="VD: Binary Search Toàn Tập"
-                className={inputCls}
-              />
-            </Field>
-          </div>
-          <div className="col-12 col-sm-6">
-            <Field label="Slug URL" required hint="Định danh duy nhất trên thanh địa chỉ">
-              <input
-                type="text"
-                value={form.slug}
-                onChange={(e) => set('slug', e.target.value)}
-                placeholder="binary-search-toan-tap"
-                className={inputCls}
-              />
-            </Field>
-          </div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Tiêu đề" required>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="VD: Binary Search Toàn Tập"
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Slug URL" required hint="Định danh duy nhất trên thanh địa chỉ">
+            <input
+              type="text"
+              value={form.slug}
+              onChange={(e) => set('slug', e.target.value)}
+              placeholder="binary-search-toan-tap"
+              className={inputCls}
+            />
+          </Field>
         </div>
 
-        <div className="row g-3">
-          <div className="col-12 col-sm-4">
-            <Field label="Chuyên mục" required>
-              <input
-                type="text"
-                value={form.category}
-                onChange={(e) => set('category', e.target.value)}
-                placeholder="VD: Search, Dynamic Programming"
-                className={inputCls}
-              />
-            </Field>
-          </div>
-          <div className="col-12 col-sm-4">
-            <Field label="Thứ tự hiển thị (Order)">
-              <input
-                type="number"
-                value={form.orderIndex}
-                onChange={(e) => set('orderIndex', e.target.value)}
-                className={inputCls}
-              />
-            </Field>
-          </div>
-          <div className="col-12 col-sm-4 d-flex align-items-center pt-sm-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Field label="Chuyên mục" required>
+            <input
+              type="text"
+              value={form.category}
+              onChange={(e) => set('category', e.target.value)}
+              placeholder="VD: Search, Dynamic Programming"
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Thứ tự hiển thị (Order)">
+            <input
+              type="number"
+              value={form.orderIndex}
+              onChange={(e) => set('orderIndex', e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+          <div className="flex items-center pt-6">
             <Toggle
               checked={form.isPublished}
               onChange={(v) => set('isPublished', v)}
@@ -193,15 +181,31 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
         </Field>
 
         <div>
-          <div className="mb-2 d-flex align-items-center justify-content-between">
-            <span className="form-label mb-0">
-              Nội dung bài học (Markdown) <span className="text-danger">*</span>
-            </span>
-            <div className="nav nav-pills nav-soft d-inline-flex bg-body-tertiary rounded-2 p-1 fs-xs">
-              <button type="button" onClick={() => setTab('edit')} className={tabCls('edit')}>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
+              Nội dung bài học (Markdown) <span className="text-[#EF4743]">*</span>
+            </label>
+            <div className="flex rounded-md border border-[#E6E6E6] bg-[#F7F8FA] p-0.5 text-xs dark:border-[#3E3E3E] dark:bg-[#202020]">
+              <button
+                type="button"
+                onClick={() => setTab('edit')}
+                className={`rounded px-2.5 py-1 ${
+                  tab === 'edit'
+                    ? 'bg-white font-medium text-[#262626] shadow-sm dark:bg-[#333] dark:text-[#EFF1F6]'
+                    : 'text-neutral-500 hover:text-[#262626] dark:text-neutral-400 dark:hover:text-[#EFF1F6]'
+                }`}
+              >
                 Soạn thảo
               </button>
-              <button type="button" onClick={() => setTab('preview')} className={tabCls('preview')}>
+              <button
+                type="button"
+                onClick={() => setTab('preview')}
+                className={`rounded px-2.5 py-1 ${
+                  tab === 'preview'
+                    ? 'bg-white font-medium text-[#262626] shadow-sm dark:bg-[#333] dark:text-[#EFF1F6]'
+                    : 'text-neutral-500 hover:text-[#262626] dark:text-neutral-400 dark:hover:text-[#EFF1F6]'
+                }`}
+              >
                 Xem trước
               </button>
             </div>
@@ -213,16 +217,16 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
               onChange={(e) => set('content', e.target.value)}
               rows={12}
               placeholder="# Hướng dẫn lý thuyết..."
-              className={`${inputCls} font-monospace fs-xs lh-lg`}
+              className={`${inputCls} font-mono text-xs leading-relaxed`}
             />
           ) : (
-            <div className="overflow-y-auto rounded-2 border bg-surface p-3" style={{ minHeight: 280, maxHeight: 420 }}>
+            <div className="min-h-[280px] max-h-[420px] overflow-y-auto rounded-lg border border-[#E6E6E6] bg-white p-4 dark:border-[#3E3E3E] dark:bg-[#202020]">
               <MarkdownRenderer content={form.content || '*Chưa có nội dung soạn thảo*'} />
             </div>
           )}
         </div>
 
-        <div className="d-flex justify-content-end gap-2 border-top pt-3">
+        <div className="flex justify-end gap-2 border-t border-[#E6E6E6] pt-3 dark:border-[#3E3E3E]">
           <button type="button" onClick={onClose} className={btnGhost} disabled={saving}>
             Hủy
           </button>
@@ -234,8 +238,6 @@ function TheoryEditor({ open, theory, onClose, onSaved }) {
     </Dialog>
   );
 }
-
-const thCls = 'bg-body-tertiary fw-medium';
 
 export default function AdminTheoriesPage() {
   const toast = useToast();
@@ -295,11 +297,11 @@ export default function AdminTheoriesPage() {
   };
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <div className="space-y-5">
       <PageHeader
         title="Quản lý bài giảng lý thuyết"
-        subtitle="Thêm mới, cập nhật nội dung markdown và quản lý trạng thái hiển thị lý thuyết."
-        actions={
+        description="Thêm mới, cập nhật nội dung markdown và quản lý trạng thái hiển thị lý thuyết."
+        action={
           <button
             type="button"
             onClick={() => {
@@ -308,29 +310,29 @@ export default function AdminTheoriesPage() {
             }}
             className={btnPrimary}
           >
-            <Plus size={16} />
+            <Plus className="h-4 w-4" />
             <span>Tạo bài học</span>
           </button>
         }
       />
 
-      <Card className="p-3">
-        <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
-          <div className="d-flex flex-grow-1 align-items-center gap-2">
-            <div className="position-relative flex-grow-1" style={{ maxWidth: 384 }}>
-              <Search size={16} className="position-absolute top-50 translate-middle-y text-body-secondary" style={{ left: 12 }} />
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-1 items-center gap-2">
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm bài học theo tiêu đề, slug..."
-                className={`${inputCls} ps-5`}
+                className={`${inputCls} pl-9`}
               />
             </div>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className={`${selectCls} w-auto`}
+              className="h-9 rounded-lg border border-[#E6E6E6] bg-white px-3 text-sm text-[#262626] dark:border-[#3E3E3E] dark:bg-[#282828] dark:text-[#EFF1F6]"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
@@ -339,64 +341,68 @@ export default function AdminTheoriesPage() {
               ))}
             </select>
           </div>
-          <span className="fs-xs text-body-secondary">
-            Tổng cộng: <strong className="text-body-emphasis">{filtered.length}</strong> bài học
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            Tổng cộng: <strong className="text-[#262626] dark:text-[#EFF1F6]">{filtered.length}</strong> bài học
           </span>
         </div>
       </Card>
 
       <Card className="overflow-hidden">
         {loading ? (
-          <Spinner />
+          <div className="py-16 text-center">
+            <Spinner />
+          </div>
         ) : filtered.length === 0 ? (
-          <Empty>
-            <div className="fw-medium text-body-emphasis">Chưa có bài giảng nào</div>
-            <div className="mt-1">Nhấn Tạo bài học để bắt đầu viết nội dung mới.</div>
-          </Empty>
+          <div className="py-12">
+            <Empty title="Chưa có bài giảng nào" description="Nhấn Tạo bài học để bắt đầu viết nội dung mới." />
+          </div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead>
-                <tr className="fs-xs text-body-secondary">
-                  <th className={`${thCls} ps-3`}>STT</th>
-                  <th className={thCls}>Tiêu đề bài học</th>
-                  <th className={thCls}>Chủ đề</th>
-                  <th className={thCls}>Slug</th>
-                  <th className={thCls}>Trạng thái</th>
-                  <th className={`${thCls} pe-3 text-end`}>Thao tác</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-[#E6E6E6] bg-[#F7F8FA] text-xs font-medium text-neutral-500 dark:border-[#3E3E3E] dark:bg-[#202020] dark:text-neutral-400">
+                <tr>
+                  <th className="px-4 py-3">STT</th>
+                  <th className="px-4 py-3">Tiêu đề bài học</th>
+                  <th className="px-4 py-3">Chủ đề</th>
+                  <th className="px-4 py-3">Slug</th>
+                  <th className="px-4 py-3">Trạng thái</th>
+                  <th className="px-4 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#E6E6E6] dark:divide-[#3E3E3E]">
                 {filtered.map((item, idx) => (
-                  <tr key={item.id || idx}>
-                    <td className="ps-3 fs-xs text-body-secondary">{item.orderIndex ?? idx + 1}</td>
-                    <td className="fw-medium text-body-emphasis">
-                      <div className="text-truncate" style={{ maxWidth: 448 }}>{item.title}</div>
+                  <tr
+                    key={item.id || idx}
+                    className="hover:bg-[#F7F8FA] dark:hover:bg-[#303030]/50 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-xs text-neutral-400">{item.orderIndex ?? idx + 1}</td>
+                    <td className="px-4 py-3 font-medium text-[#262626] dark:text-[#EFF1F6]">
+                      <div className="max-w-md truncate">{item.title}</div>
                       {item.summary && (
-                        <div className="text-truncate fs-xs fw-normal text-body-secondary" style={{ maxWidth: 448 }}>
-                          {item.summary}
-                        </div>
+                        <div className="max-w-md truncate text-xs text-neutral-400">{item.summary}</div>
                       )}
                     </td>
-                    <td>
-                      <span className="rounded-1 bg-body-secondary px-2 py-1 fs-xs text-body-secondary">
+                    <td className="px-4 py-3">
+                      <span className="rounded bg-[#F0F0F0] px-2 py-0.5 text-xs text-neutral-600 dark:bg-[#333333] dark:text-neutral-300">
                         {item.category || 'General'}
                       </span>
                     </td>
-                    <td className="font-monospace fs-xs text-body-secondary">{item.slug}</td>
-                    <td>
+                    <td className="px-4 py-3 text-xs font-mono text-neutral-500 dark:text-neutral-400">
+                      {item.slug}
+                    </td>
+                    <td className="px-4 py-3">
                       {item.published ? (
                         <Badge tone="green">
-                          <Eye size={12} className="me-1 align-text-bottom" /> Công khai
+                          <Eye className="mr-1 h-3 w-3" /> Công khai
                         </Badge>
                       ) : (
                         <Badge tone="red">
-                          <EyeOff size={12} className="me-1 align-text-bottom" /> Bản nháp
+                          <EyeOff className="mr-1 h-3 w-3" /> Bản nháp
                         </Badge>
                       )}
                     </td>
-                    <td className="pe-3 text-end">
-                      <div className="d-flex align-items-center justify-content-end gap-1">
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
                           onClick={() => {
@@ -406,15 +412,15 @@ export default function AdminTheoriesPage() {
                           className={iconBtn}
                           title="Chỉnh sửa"
                         >
-                          <Pencil size={16} />
+                          <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeleteId(item.id)}
-                          className={`${iconBtn} icon-btn-danger`}
+                          className={`${iconBtn} hover:text-[#EF4743] dark:hover:text-[#EF4743]`}
                           title="Xóa bài học"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -439,9 +445,9 @@ export default function AdminTheoriesPage() {
       <ConfirmDialog
         open={Boolean(deleteId)}
         title="Xác nhận xóa bài học lý thuyết"
-        message="Hành động này không thể hoàn tác. Học viên sẽ không thể xem nội dung bài giảng này nữa."
+        description="Hành động này không thể hoàn tác. Học viên sẽ không thể xem nội dung bài giảng này nữa."
         confirmLabel="Xóa bài học"
-        busy={deleting}
+        loading={deleting}
         onConfirm={confirmDelete}
         onClose={() => setDeleteId(null)}
       />

@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Spinner } from 'react-bootstrap';
 import {
   Shield,
   ShieldAlert,
-  ShieldCheck,
+  Loader2,
   ArrowLeft,
   User,
   Lock,
@@ -28,8 +27,6 @@ export default function AdminRoute({ children }) {
 
   const checkAdminAuth = () => {
     const token = localStorage.getItem('dapcode_token');
-
-    // 1. Không có token -> Chưa đăng nhập, từ chối và hiện form
     if (!token) {
       localStorage.removeItem('dapcode_user');
       setCurrentUser(null);
@@ -37,24 +34,19 @@ export default function AdminRoute({ children }) {
       return;
     }
 
-    // 2. Có token -> Gửi lên Server để verify tính hợp lệ chữ ký mật mã qua /api/v1/users/me
     getCurrentUser()
       .then((res) => {
         const u = res?.data || res;
-        // Kiểm tra chặt chẽ vai trò ROLE_ADMIN từ phía server database
         if (u && u.role === 'ROLE_ADMIN') {
           localStorage.setItem('dapcode_user', JSON.stringify(u));
           setCurrentUser(u);
           setState('ok');
         } else {
-          // Token hợp lệ nhưng tài khoản không có quyền Admin
           setCurrentUser(u);
           setState('denied');
         }
       })
       .catch(() => {
-        // Token giả mạo, hết hạn hoặc không khớp chữ ký số bí mật (HTTP 401/403)
-        // Thu hồi token và dữ liệu trong localStorage
         localStorage.removeItem('dapcode_token');
         localStorage.removeItem('dapcode_user');
         setCurrentUser(null);
@@ -99,7 +91,7 @@ export default function AdminRoute({ children }) {
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        'Tài khoản hoặc mật khẩu không chính xác. Tài khoản mặc định: admin / admin123';
+        'Tài khoản hoặc mật khẩu không chính xác. Bạn có thể thử tài khoản mặc định: admin / admin123';
       setErrorMessage(msg);
       setIsLoading(false);
     }
@@ -128,10 +120,10 @@ export default function AdminRoute({ children }) {
 
   if (state === 'checking') {
     return (
-      <div className="d-flex vh-100 align-items-center justify-content-center bg-canvas">
-        <div className="d-flex flex-column align-items-center gap-3">
-          <Spinner animation="border" className="text-primary" />
-          <p className="mb-0 fs-xs text-body-secondary">
+      <div className="flex h-screen items-center justify-center bg-[#F0F0F0] dark:bg-[#1A1A1A]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-[#FFA116]" />
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Đang xác thực quyền Quản trị viên...
           </p>
         </div>
@@ -144,71 +136,55 @@ export default function AdminRoute({ children }) {
     return children;
   }
 
-  // Giao diện Modal Đăng Nhập Quản Trị Viên riêng biệt tại URL Admin (luôn dùng nền tối)
+  // Giao diện Modal Đăng Nhập Quản Trị Viên riêng biệt tại URL Admin
   return (
-    <div
-      data-bs-theme="dark"
-      className="position-relative d-flex min-vh-100 align-items-center justify-content-center p-3 bg-black text-body"
-    >
+    <div className="relative flex min-h-screen items-center justify-center bg-[#0F0F0F] p-4 text-[#262626] dark:text-[#EFF1F6]">
       {/* Background ambient pattern & glowing spotlight */}
-      <div
-        className="pe-none position-absolute top-0 start-0 w-100 h-100"
-        style={{
-          backgroundImage: 'radial-gradient(#FFA116 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-          opacity: 0.1,
-        }}
-      />
-      <div
-        className="pe-none position-absolute top-50 start-50 translate-middle rounded-circle"
-        style={{ width: 500, height: 500, background: 'rgba(255, 161, 22, 0.1)', filter: 'blur(120px)' }}
-      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(#FFA116_1px,transparent_1px)] [background-size:24px_24px] opacity-10" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] rounded-full bg-[#FFA116]/10 blur-[120px]" />
 
       {/* Admin Login Modal Container */}
-      <div className="position-relative w-100 rounded-4 border bg-surface p-4 shadow-lg" style={{ maxWidth: 448 }}>
+      <div className="relative w-full max-w-md rounded-2xl border border-[#3E3E3E] bg-[#1E1E1E] p-7 shadow-2xl backdrop-blur-md">
         {/* Header Branding */}
         <div className="text-center">
-          <div
-            className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-4 border border-primary border-opacity-25 bg-primary bg-opacity-10 text-primary"
-            style={{ width: 52, height: 52 }}
-          >
-            <Shield size={28} />
+          <div className="mx-auto mb-3 flex h-13 w-13 items-center justify-center rounded-2xl border border-[#FFA116]/30 bg-[#FFA116]/15 text-[#FFA116] shadow-inner">
+            <Shield className="h-7 w-7" />
           </div>
-          <div className="d-flex align-items-center justify-content-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <DapcodeLogo size="sm" />
-            <span className="fs-lg fw-bold text-body-emphasis">LiệtCode</span>
-            <span className="badge rounded-1 px-2 border border-primary border-opacity-25 bg-primary bg-opacity-25 text-primary text-uppercase fs-2xs fw-bold">
+            <span className="text-lg font-bold tracking-tight text-white">LiệtCode</span>
+            <span className="rounded-md border border-[#FFA116]/30 bg-[#FFA116]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#FFA116]">
               Admin Portal
             </span>
           </div>
-          <h2 className="mt-2 mb-0 fs-base fw-semibold text-body-emphasis">
+          <h2 className="mt-2 text-base font-semibold text-white">
             Đăng nhập Quản trị viên
           </h2>
-          <p className="mt-1 mb-0 fs-xs text-body-secondary">
+          <p className="mt-1 text-xs text-neutral-400">
             Khu vực quản lý bài tập, bài học lý thuyết, test case và danh sách học viên.
           </p>
         </div>
 
         {/* Warning if logged in as regular student */}
         {currentUser && currentUser.role !== 'ROLE_ADMIN' && (
-          <div className="alert alert-danger mt-3 mb-0 p-3 rounded-3 fs-xs">
-            <div className="d-flex align-items-start gap-2">
-              <ShieldAlert size={16} className="flex-shrink-0" />
+          <div className="mt-4 rounded-xl border border-[#EF4743]/30 bg-[#EF4743]/10 p-3 text-xs text-[#FF6B68]">
+            <div className="flex items-start gap-2">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 <div>
                   Đang đăng nhập với: <strong>{currentUser.username || currentUser.email}</strong>
                 </div>
-                <div className="mt-1 fs-2xs opacity-75">
-                  Tài khoản này có vai trò học viên (<code className="font-monospace text-reset">ROLE_USER</code>) và không thể vào trang Quản trị.
+                <div className="mt-0.5 text-[11px] opacity-90">
+                  Tài khoản này có vai trò học viên (<code className="font-mono">ROLE_USER</code>) và không thể vào trang Quản trị.
                 </div>
               </div>
             </div>
             <button
               type="button"
               onClick={handleLogoutOtherAccount}
-              className="btn btn-sm btn-outline-danger mt-2 w-100 d-flex align-items-center justify-content-center gap-2 fs-xs"
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#EF4743]/40 bg-black/30 py-1.5 text-xs font-medium text-[#FF8583] hover:bg-black/50 transition-colors cursor-pointer"
             >
-              <LogOut size={14} />
+              <LogOut className="h-3.5 w-3.5" />
               <span>Đăng xuất tài khoản này để đăng nhập Admin</span>
             </button>
           </div>
@@ -216,63 +192,63 @@ export default function AdminRoute({ children }) {
 
         {/* Error message */}
         {errorMessage && (
-          <div className="alert alert-danger mt-3 mb-0 p-3 rounded-3 fs-xs d-flex align-items-start gap-2">
-            <ShieldAlert size={16} className="flex-shrink-0" />
+          <div className="mt-4 rounded-xl border border-[#EF4743]/30 bg-[#EF4743]/10 p-3 text-xs text-[#FF6B68] flex items-start gap-2">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {/* Username & Password Form */}
-        <form onSubmit={handlePasswordLogin} className="mt-4 d-flex flex-column gap-3">
+        <form onSubmit={handlePasswordLogin} className="mt-5 space-y-3">
           <div>
-            <label className="form-label">
+            <label className="block text-xs font-medium text-neutral-300 mb-1">
               Tài khoản / Email Quản trị
             </label>
-            <div className="position-relative">
-              <div className="pe-none position-absolute top-50 translate-middle-y d-flex text-body-secondary" style={{ left: 12 }}>
-                <User size={16} />
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                <User className="h-4 w-4" />
               </div>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="admin hoặc admin@dapcode.io"
-                className="form-control ps-5 py-2 rounded-3 fs-xs"
+                className="w-full rounded-xl border border-[#3E3E3E] bg-[#2A2A2A] py-2.5 pl-9 pr-3 text-xs text-white placeholder-neutral-500 focus:border-[#FFA116] focus:outline-none focus:ring-1 focus:ring-[#FFA116]"
               />
             </div>
           </div>
 
           <div>
-            <div className="d-flex align-items-center justify-content-between mb-1">
-              <label className="form-label mb-0">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-neutral-300">
                 Mật khẩu
               </label>
               <button
                 type="button"
                 onClick={handleFillDemo}
-                className="btn btn-link p-0 border-0 fs-2xs text-primary d-flex align-items-center gap-1"
+                className="text-[11px] text-[#FFA116] hover:underline cursor-pointer flex items-center gap-1"
               >
-                <Sparkles size={12} />
+                <Sparkles className="h-3 w-3" />
                 <span>Điền mẫu (admin / admin123)</span>
               </button>
             </div>
-            <div className="position-relative">
-              <div className="pe-none position-absolute top-50 translate-middle-y d-flex text-body-secondary" style={{ left: 12 }}>
-                <Lock size={16} />
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                <Lock className="h-4 w-4" />
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="form-control ps-5 pe-5 py-2 rounded-3 fs-xs"
+                className="w-full rounded-xl border border-[#3E3E3E] bg-[#2A2A2A] py-2.5 pl-9 pr-9 text-xs text-white placeholder-neutral-500 focus:border-[#FFA116] focus:outline-none focus:ring-1 focus:ring-[#FFA116]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="icon-btn position-absolute top-50 end-0 translate-middle-y me-1"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-500 hover:text-neutral-300 cursor-pointer"
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
@@ -281,31 +257,34 @@ export default function AdminRoute({ children }) {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn btn-primary mt-2 w-100 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3 fs-xs fw-bold text-dark shadow-sm"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#FFA116] hover:bg-[#FFA116]/90 py-2.5 px-4 text-xs font-bold text-black shadow-md transition-all disabled:opacity-50 cursor-pointer"
           >
-            {isLoading ? <Spinner animation="border" size="sm" /> : <KeyRound size={16} />}
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-black" />
+            ) : (
+              <KeyRound className="h-4 w-4 text-black" />
+            )}
             <span>Đăng nhập vào Menu Admin</span>
           </button>
         </form>
 
         {/* Separator */}
-        <div className="my-3 d-flex align-items-center gap-2">
-          <div className="flex-grow-1 border-top" />
-          <span className="fs-2xs fw-semibold text-uppercase text-nowrap text-body-secondary">
+        <div className="relative my-4 flex items-center justify-center">
+          <div className="w-full border-t border-[#3E3E3E]" />
+          <span className="bg-[#1E1E1E] px-2 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
             hoặc phương thức khác
           </span>
-          <div className="flex-grow-1 border-top" />
         </div>
 
         {/* Google OAuth & Quick Dev Mode */}
-        <div className="d-flex flex-column gap-2">
+        <div className="space-y-2">
           <button
             type="button"
             disabled={isLoading}
             onClick={handleGoogleLogin}
-            className="btn btn-ghost border w-100 d-flex align-items-center justify-content-center gap-3 rounded-3 fs-xs"
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#3E3E3E] bg-[#262626] hover:bg-[#333333] py-2 px-4 text-xs font-medium text-neutral-200 transition-colors cursor-pointer"
           >
-            <svg width={16} height={16} viewBox="0 0 24 24">
+            <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -325,17 +304,15 @@ export default function AdminRoute({ children }) {
             </svg>
             <span>Đăng nhập Google (Tài khoản đã phân quyền Admin)</span>
           </button>
-
-
         </div>
 
         {/* Back to student page link */}
-        <div className="mt-4 border-top pt-3 text-center">
+        <div className="mt-5 border-t border-[#3E3E3E] pt-3 text-center">
           <Link
             to="/roadmap"
-            className="d-inline-flex align-items-center gap-2 fs-xs link-body-emphasis link-opacity-50 link-opacity-100-hover text-decoration-none"
+            className="inline-flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors"
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft className="h-3.5 w-3.5" />
             <span>Quay lại trang học viên (Roadmap)</span>
           </Link>
         </div>

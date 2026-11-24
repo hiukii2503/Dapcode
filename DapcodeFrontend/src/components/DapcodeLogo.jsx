@@ -1,148 +1,32 @@
 import React from 'react';
 
 export default function DapcodeLogo({ size = 'md', className = '' }) {
-  const sizes = {
-    xs: 24,
-    sm: 28,
-    md: 32,
-    lg: 40,
-    xl: 48,
+  const sizeClasses = {
+    xs: 'h-5 w-5',
+    sm: 'h-6 w-6',
+    md: 'h-7 w-7',
+    lg: 'h-9 w-9',
+    xl: 'h-11 w-11',
   };
 
-  const currentSize = sizes[size] || sizes.md;
+  const currentSize = sizeClasses[size] || sizeClasses.md;
 
   return (
-    <div className={`position-relative d-inline-flex align-items-center justify-content-center flex-shrink-0 user-select-none ${className}`}>
+    <div className={`relative inline-flex items-center justify-center flex-shrink-0 select-none ${className}`}>
       <svg
-        width={currentSize}
-        height={currentSize}
-        viewBox="0 0 100 100"
-        fill="none"
+        className={`${currentSize} transition-transform hover:scale-105`}
+        viewBox="50 110 1060 1060"
         xmlns="http://www.w3.org/2000/svg"
+        aria-label="LiệtCode Logo"
       >
-        <defs>
-          <linearGradient id="lietcodeBg" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#252525" />
-            <stop offset="100%" stopColor="#121212" />
-          </linearGradient>
-          <linearGradient id="lietcodeGold" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFB800" />
-            <stop offset="100%" stopColor="#FF8A00" />
-          </linearGradient>
-          <filter id="lietcodeGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-        </defs>
-
-        {/* Base Squircle Container */}
-        <rect
-          x="3"
-          y="3"
-          width="94"
-          height="94"
-          rx="24"
-          fill="url(#lietcodeBg)"
-          stroke="#FFA116"
-          strokeWidth="2.5"
-          strokeOpacity="0.75"
-        />
-        <rect
-          x="5"
-          y="5"
-          width="90"
-          height="90"
-          rx="22"
-          fill="none"
-          stroke="#FFFFFF"
-          strokeWidth="1"
-          strokeOpacity="0.08"
-        />
-
-        {/* Wheelchair Main Wheel (Large drive wheel) */}
-        <circle cx="44" cy="62" r="19" fill="none" stroke="url(#lietcodeGold)" strokeWidth="4.5" />
-        <circle cx="44" cy="62" r="6.5" fill="#2A2A2A" stroke="url(#lietcodeGold)" strokeWidth="3" />
-        
-        {/* Wheel Spokes */}
-        <line x1="44" y1="45" x2="44" y2="79" stroke="#FFA116" strokeWidth="2" strokeOpacity="0.8" />
-        <line x1="27" y1="62" x2="61" y2="62" stroke="#FFA116" strokeWidth="2" strokeOpacity="0.8" />
-        <line x1="32" y1="50" x2="56" y2="74" stroke="#FFA116" strokeWidth="1.8" strokeOpacity="0.65" />
-        <line x1="32" y1="74" x2="56" y2="50" stroke="#FFA116" strokeWidth="1.8" strokeOpacity="0.65" />
-
-        {/* Wheelchair Frame & Seat */}
         <path
-          d="M 33 39 L 41 55 L 59 55"
-          fill="none"
-          stroke="#EFF1F6"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path d="M 59 55 L 68 73" fill="none" stroke="#EFF1F6" strokeWidth="3.5" strokeLinecap="round" />
-        {/* Small front caster wheel */}
-        <circle cx="68" cy="77" r="4.5" fill="#FFA116" stroke="#FFFFFF" strokeWidth="1.5" />
-
-        {/* Programmer Person */}
-        {/* Head with Headphones */}
-        <circle cx="44" cy="25" r="7.5" fill="#EFF1F6" />
-        <path d="M 38 25 C 38 18 50 18 50 25" fill="none" stroke="#FFA116" strokeWidth="2.2" strokeLinecap="round" />
-        <rect x="36.5" y="23" width="3" height="5" rx="1.5" fill="#FFA116" />
-        <rect x="48.5" y="23" width="3" height="5" rx="1.5" fill="#FFA116" />
-
-        {/* Body / Torso (Leaning forward into code) */}
-        <path
-          d="M 43 32 L 42 45 L 58 47"
-          fill="none"
-          stroke="#EFF1F6"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Arms typing on laptop */}
-        <path
-          d="M 43 38 L 57 44 L 67 43"
-          fill="none"
-          stroke="#FFA116"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Laptop on lap */}
-        <line x1="58" y1="46" x2="76" y2="46" stroke="#E6E6E6" strokeWidth="3" strokeLinecap="round" />
-        <line
-          x1="72"
-          y1="45"
-          x2="79"
-          y2="33"
-          stroke="url(#lietcodeGold)"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          filter="url(#lietcodeGlow)"
-        />
-
-        {/* Code glyphs on screen < / > */}
-        <path
-          d="M 72 37 L 70 39 L 72 41"
-          fill="none"
-          stroke="#00E5FF"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M 75 37 L 77 39 L 75 41"
-          fill="none"
-          stroke="#00E5FF"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          d="M 408,684 L 393,704 L 379,727 L 368,750 L 357,781 L 350,812 L 348,836 L 347,837 L 347,870 L 348,871 L 349,890 L 356,923 L 367,955 L 380,982 L 390,999 L 417,1035 L 442,1060 L 469,1081 L 493,1096 L 513,1106 L 530,1113 L 567,1124 L 608,1130 L 650,1130 L 651,1129 L 678,1127 L 698,1123 L 706,1120 L 710,1120 L 738,1111 L 755,1104 L 791,1085 L 813,1070 L 840,1047 L 858,1028 L 876,1005 L 891,981 L 909,942 L 920,904 L 925,873 L 925,849 L 923,840 L 916,826 L 910,819 L 902,813 L 884,806 L 868,806 L 857,809 L 842,818 L 833,828 L 828,837 L 824,850 L 822,875 L 817,896 L 808,920 L 795,944 L 781,963 L 764,981 L 746,996 L 720,1012 L 696,1022 L 668,1029 L 653,1030 L 652,1031 L 620,1031 L 594,1027 L 571,1020 L 545,1008 L 532,1000 L 515,987 L 496,968 L 486,956 L 473,936 L 464,918 L 456,896 L 451,875 L 450,860 L 449,859 L 449,832 L 453,807 L 457,793 L 464,775 L 478,749 L 489,734 L 502,720 L 507,710 L 509,702 L 509,691 L 506,679 L 499,667 L 489,657 L 480,652 L 471,649 L 458,648 L 446,651 L 433,658 Z M 309,533 L 336,560 L 345,566 L 362,574 L 379,578 L 453,578 L 457,575 L 489,532 L 490,528 L 489,527 L 310,527 Z M 235,463 L 237,467 L 261,491 L 283,504 L 299,509 L 306,510 L 503,510 L 508,506 L 539,465 L 540,461 L 538,459 L 239,459 Z M 164,392 L 164,396 L 167,400 L 192,425 L 206,434 L 215,438 L 235,443 L 553,443 L 556,441 L 590,395 L 590,391 L 584,389 L 583,390 L 182,390 L 177,389 L 176,390 L 166,390 Z M 885,319 L 874,322 L 867,326 L 836,359 L 821,371 L 809,379 L 790,389 L 762,400 L 756,404 L 748,412 L 555,684 L 549,701 L 549,718 L 554,733 L 558,739 L 568,749 L 581,756 L 596,759 L 781,759 L 782,758 L 822,758 L 823,759 L 861,759 L 862,758 L 870,758 L 871,759 L 939,759 L 940,758 L 956,758 L 958,759 L 959,758 L 961,760 L 961,1051 L 965,1065 L 971,1076 L 979,1085 L 987,1091 L 995,1095 L 1009,1099 L 1032,1098 L 1049,1091 L 1063,1079 L 1068,1072 L 1074,1059 L 1076,1046 L 1076,702 L 1073,688 L 1067,677 L 1059,669 L 1053,665 L 1044,661 L 1033,659 L 699,659 L 698,658 L 814,510 L 887,420 L 941,356 L 945,345 L 945,339 L 941,329 L 933,322 L 923,319 Z M 81,299 L 82,306 L 128,352 L 142,362 L 160,370 L 171,372 L 635,372 L 636,374 L 587,439 L 478,589 L 476,598 L 476,605 L 480,617 L 485,625 L 503,642 L 515,649 L 520,650 L 528,649 L 538,641 L 708,403 L 720,392 L 731,385 L 775,369 L 804,352 L 827,332 L 846,311 L 847,308 L 846,301 L 843,298 L 837,296 L 86,295 Z M 921,154 L 907,157 L 893,163 L 884,169 L 871,182 L 861,199 L 857,211 L 856,237 L 859,250 L 865,263 L 871,272 L 882,283 L 892,290 L 910,297 L 937,298 L 952,294 L 966,287 L 972,283 L 986,269 L 992,260 L 997,249 L 1000,238 L 1001,221 L 999,208 L 994,194 L 985,180 L 975,170 L 965,163 L 948,156 L 938,154 Z"
+          fill="#F7931E"
+          fillRule="evenodd"
         />
       </svg>
     </div>
   );
 }
 
-// Export alias LietCodeLogo for clear semantics
 export { DapcodeLogo as LietCodeLogo };

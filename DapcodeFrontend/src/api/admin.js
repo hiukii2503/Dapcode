@@ -63,8 +63,24 @@ export const adminGetTheories = async (category) => {
   return (list || []).map(normTheory);
 };
 export const createTheory = async (t) =>
-  normTheory(unwrap(await api.post('/admin/theories', { ...t, published: t.isPublished })));
-export const updateTheory = async (id, t) => normTheory(unwrap(await api.put(`/admin/theories/${id}`, t)));
+  normTheory(
+    unwrap(
+      await api.post('/admin/theories', {
+        ...t,
+        contentMarkdown: t.contentMarkdown ?? t.content,
+        published: t.isPublished,
+      })
+    )
+  );
+export const updateTheory = async (id, t) =>
+  normTheory(
+    unwrap(
+      await api.put(`/admin/theories/${id}`, {
+        ...t,
+        contentMarkdown: t.contentMarkdown ?? t.content,
+      })
+    )
+  );
 export const deleteTheory = async (id) => unwrap(await api.delete(`/admin/theories/${id}`));
 
 export const adminGetUsers = async (params) =>

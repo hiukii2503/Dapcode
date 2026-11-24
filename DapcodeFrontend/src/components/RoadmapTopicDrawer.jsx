@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Offcanvas } from 'react-bootstrap';
-import { Check, ExternalLink, Trophy } from 'lucide-react';
+import { X, Check, ExternalLink, Trophy } from 'lucide-react';
 import DifficultyBadge from './DifficultyBadge';
 
 export default function RoadmapTopicDrawer({
@@ -12,7 +11,7 @@ export default function RoadmapTopicDrawer({
   completedSlugs = new Set(),
   onToggleComplete,
 }) {
-  if (!node) return null;
+  if (!isOpen || !node) return null;
 
   const topicProblems = problems.filter(
     (p) => p.category?.toLowerCase() === node.name?.toLowerCase() ||
@@ -24,83 +23,101 @@ export default function RoadmapTopicDrawer({
   const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
   return (
-    <Offcanvas show={isOpen} onHide={onClose} placement="end" className="offcanvas-md-width">
-      {/* Drawer Header */}
-      <Offcanvas.Header closeButton className="border-bottom bg-body-tertiary px-4 py-3">
-        <div>
-          <Offcanvas.Title as="h2" className="fs-sm fw-semibold text-body-emphasis mb-0">
-            {node.name}
-          </Offcanvas.Title>
-          <div className="mt-1 fs-2xs text-body-secondary">
-            Đã giải <strong className="text-success font-monospace">{completedCount}</strong> / {total} bài ({percent}%)
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/30 dark:bg-black/60 backdrop-blur-xs transition-opacity">
+      <div className="relative flex h-full w-full max-w-md flex-col border-l border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#FFFFFF] dark:bg-[#282828]">
+        {/* Drawer Header */}
+        <div className="flex h-14 items-center justify-between border-b border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333] px-5">
+          <div>
+            <h2 className="text-sm font-semibold text-[#262626] dark:text-[#EFF1F6] tracking-tight flex items-center space-x-2">
+              <span>{node.name}</span>
+            </h2>
+            <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+              Đã giải <strong className="text-[#2CBB5D] dark:text-[#2CBB5D] font-mono">{completedCount}</strong> / {total} bài ({percent}%)
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-[#F7F8FA] dark:hover:bg-[#333333] transition-colors cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-      </Offcanvas.Header>
 
-      {/* Progress bar */}
-      <div className="progress rounded-0 flex-shrink-0 border-bottom" style={{ height: 4 }}>
-        <div className="progress-bar bg-contrast" style={{ width: `${percent}%` }} />
-      </div>
+        {/* Progress bar */}
+        <div className="w-full h-1 bg-[#F7F8FA] dark:bg-[#333333] border-b border-[#E6E6E6] dark:border-[#3E3E3E]">
+          <div
+            className="h-full bg-neutral-800 dark:bg-neutral-200 transition-all duration-300"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
 
-      {/* Drawer Body Problem List */}
-      <Offcanvas.Body className="d-flex flex-column gap-2 p-3">
-        {topicProblems.length > 0 ? (
-          topicProblems.map((problem) => {
-            const isCompleted = completedSlugs.has(problem.slug);
+        {/* Drawer Body Problem List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {topicProblems.length > 0 ? (
+            topicProblems.map((problem) => {
+              const isCompleted = completedSlugs.has(problem.slug);
 
-            return (
-              <div
-                key={problem.slug || problem.id}
-                className={`d-flex align-items-center justify-content-between rounded-3 border px-3 py-2 ${
-                  isCompleted ? 'bg-success-subtle border-success-subtle' : 'bg-body-tertiary'
-                }`}
-              >
-                <div className="d-flex align-items-center gap-3 min-w-0">
-                  {/* Checkbox */}
-                  <button
-                    type="button"
-                    onClick={() => onToggleComplete(problem.slug)}
-                    className={`d-flex flex-shrink-0 align-items-center justify-content-center rounded-1 border p-0 cursor-pointer ${
-                      isCompleted ? 'bg-success border-success text-white' : 'bg-surface'
-                    }`}
-                    style={{ width: 18, height: 18 }}
-                  >
-                    <Check size={12} className={isCompleted ? '' : 'invisible'} />
-                  </button>
+              return (
+                <div
+                  key={problem.slug || problem.id}
+                  className={`group flex items-center justify-between rounded-xl border border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333] p-3 transition-colors hover:border-neutral-400 dark:hover:border-neutral-500 ${
+                    isCompleted ? 'bg-[#E8F7EE]/30 border-[#B7E4C7] dark:bg-[#14532D]/10 dark:border-[#166534]' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-3 min-w-0">
+                    {/* Checkbox */}
+                    <button
+                      type="button"
+                      onClick={() => onToggleComplete(problem.slug)}
+                      className={`flex h-4.5 w-4.5 flex-shrink-0 items-center justify-center rounded border transition-colors cursor-pointer ${
+                        isCompleted
+                          ? 'border-[#2CBB5D] bg-[#2CBB5D] text-white'
+                          : 'border-neutral-300 dark:border-neutral-700 bg-white dark:bg-[#282828] hover:border-neutral-400 text-transparent'
+                      }`}
+                    >
+                      <Check className="h-3 w-3" />
+                    </button>
 
-                  {/* Title */}
-                  <Link
-                    to={`/problems/${problem.slug}`}
-                    className="text-truncate fs-xs fw-medium link-body-emphasis text-decoration-none"
-                  >
-                    {problem.title}
-                  </Link>
+                    {/* Title */}
+                    <Link
+                      to={`/problems/${problem.slug}`}
+                      className="truncate text-xs font-medium text-neutral-800 dark:text-neutral-200 hover:text-[#262626] dark:hover:text-white transition-colors"
+                    >
+                      {problem.title}
+                    </Link>
+                  </div>
+
+                  <div className="flex items-center space-x-2 flex-shrink-0 pl-2">
+                    <DifficultyBadge difficulty={problem.difficulty} size="xs" />
+                    <Link
+                      to={`/problems/${problem.slug}`}
+                      className="p-1 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 transition-colors"
+                      title="Mở workspace"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
                 </div>
+              );
+            })
+          ) : (
+            <div className="p-8 text-center text-xs text-neutral-400 dark:text-neutral-500">
+              Đang đồng bộ dữ liệu cho nhóm chủ đề này...
+            </div>
+          )}
+        </div>
 
-                <div className="d-flex align-items-center gap-2 flex-shrink-0 ps-2">
-                  <DifficultyBadge difficulty={problem.difficulty} size="xs" />
-                  <Link to={`/problems/${problem.slug}`} className="d-inline-flex p-1 text-body-secondary" title="Mở workspace">
-                    <ExternalLink size={14} />
-                  </Link>
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="p-5 text-center fs-xs text-body-secondary">
-            Đang đồng bộ dữ liệu cho nhóm chủ đề này...
+        {/* Footer Summary */}
+        <div className="border-t border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333] p-4 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+          <div className="flex items-center space-x-1.5">
+            <Trophy className="h-3.5 w-3.5 text-[#FFA116] dark:text-[#FFC01E]" />
+            <span>NeetCode 150 Standard</span>
           </div>
-        )}
-      </Offcanvas.Body>
-
-      {/* Footer Summary */}
-      <div className="border-top bg-body-tertiary p-3 d-flex align-items-center justify-content-between fs-xs text-body-secondary">
-        <div className="d-flex align-items-center gap-2">
-          <Trophy size={14} className="text-primary" />
-          <span>NeetCode 150 Standard</span>
+          <span className="font-mono text-neutral-500 dark:text-neutral-400">{topicProblems.length} bài tập</span>
         </div>
-        <span className="font-monospace">{topicProblems.length} bài tập</span>
       </div>
-    </Offcanvas>
+    </div>
   );
 }

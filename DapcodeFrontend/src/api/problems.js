@@ -1,9 +1,11 @@
 import api from './client';
 
 let problemsCache = null;
+const problemDetailCache = new Map();
 
 export const clearProblemsCache = () => {
   problemsCache = null;
+  problemDetailCache.clear();
 };
 
 export const getProblems = async (params = {}) => {
@@ -33,5 +35,12 @@ export const getProblems = async (params = {}) => {
 };
 
 export const getProblemBySlug = async (slug) => {
-  return await api.get(`/problems/${slug}`);
+  if (slug && problemDetailCache.has(slug)) {
+    return problemDetailCache.get(slug);
+  }
+  const res = await api.get(`/problems/${slug}`);
+  if (slug && res) {
+    problemDetailCache.set(slug, res);
+  }
+  return res;
 };

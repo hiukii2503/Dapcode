@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spinner as BsSpinner } from 'react-bootstrap';
-import { Plus, Search, Pencil, Trash2, FlaskConical } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FlaskConical, Loader2 } from 'lucide-react';
 import {
   adminGetProblems,
   getProblemDetail,
@@ -26,7 +25,6 @@ import {
   useToast,
   useDebounced,
   inputCls,
-  selectCls,
   btnPrimary,
   btnGhost,
   iconBtn,
@@ -126,7 +124,12 @@ function ProblemEditor({ open, problem, categories, onClose, onSaved }) {
     }
   };
 
-  const tabCls = (t) => `nav-link cursor-pointer ${tab === t ? 'active' : ''}`;
+  const tabCls = (t) =>
+    `px-3 py-1.5 text-sm rounded-md cursor-pointer transition-colors ${
+      tab === t
+        ? 'bg-[#F0F0F0] dark:bg-[#333333] font-medium text-[#262626] dark:text-[#EFF1F6]'
+        : 'text-neutral-500 hover:text-[#262626] dark:hover:text-[#EFF1F6]'
+    }`;
 
   return (
     <Dialog
@@ -140,7 +143,7 @@ function ProblemEditor({ open, problem, categories, onClose, onSaved }) {
             Hủy
           </button>
           <button type="button" className={btnPrimary} onClick={save} disabled={saving || loading}>
-            {saving && <BsSpinner animation="border" size="sm" />}
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {isEdit ? 'Lưu thay đổi' : 'Tạo bài tập'}
           </button>
         </>
@@ -149,54 +152,44 @@ function ProblemEditor({ open, problem, categories, onClose, onSaved }) {
       {loading ? (
         <Spinner label="Đang tải chi tiết bài tập..." />
       ) : (
-        <div className="d-flex flex-column gap-3">
-          <div className="row g-3">
-            <div className="col-12 col-md-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div className="md:col-span-2">
               <Field label="Tiêu đề *">
                 <input className={inputCls} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Two Sum" />
               </Field>
             </div>
-            <div className="col-12 col-md-3">
-              <Field label="Slug" hint={isEdit ? 'Không đổi được slug' : 'Để trống để tự sinh từ tiêu đề'}>
-                <input
-                  className={`${inputCls} ${isEdit ? 'opacity-75' : ''}`}
-                  value={form.slug}
-                  disabled={isEdit}
-                  onChange={(e) => set('slug', e.target.value)}
-                  placeholder="two-sum"
-                />
-              </Field>
-            </div>
-            <div className="col-12 col-md-3">
-              <Field label="Độ khó">
-                <select className={selectCls} value={form.difficulty} onChange={(e) => set('difficulty', e.target.value)}>
-                  <option>Easy</option>
-                  <option>Medium</option>
-                  <option>Hard</option>
-                </select>
-              </Field>
-            </div>
-            <div className="col-12 col-md-3">
-              <Field label="Chủ đề">
-                <input className={inputCls} list="admin-categories" value={form.category} onChange={(e) => set('category', e.target.value)} placeholder="Arrays & Hashing" />
-                <datalist id="admin-categories">
-                  {categories.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </Field>
-            </div>
-            <div className="col-12 col-md-3">
-              <Field label="Giới hạn thời gian (ms)">
-                <input type="number" min={100} className={inputCls} value={form.timeLimitMs} onChange={(e) => set('timeLimitMs', e.target.value)} />
-              </Field>
-            </div>
-            <div className="col-12 col-md-3">
-              <Field label="Giới hạn bộ nhớ (MB)">
-                <input type="number" min={16} className={inputCls} value={form.memoryMb} onChange={(e) => set('memoryMb', e.target.value)} />
-              </Field>
-            </div>
-            <div className="col-12 col-md-3 d-flex align-items-end pb-2">
+            <Field label="Slug" hint={isEdit ? 'Không đổi được slug' : 'Để trống để tự sinh từ tiêu đề'}>
+              <input
+                className={`${inputCls} ${isEdit ? 'opacity-60' : ''}`}
+                value={form.slug}
+                disabled={isEdit}
+                onChange={(e) => set('slug', e.target.value)}
+                placeholder="two-sum"
+              />
+            </Field>
+            <Field label="Độ khó">
+              <select className={inputCls} value={form.difficulty} onChange={(e) => set('difficulty', e.target.value)}>
+                <option>Easy</option>
+                <option>Medium</option>
+                <option>Hard</option>
+              </select>
+            </Field>
+            <Field label="Chủ đề">
+              <input className={inputCls} list="admin-categories" value={form.category} onChange={(e) => set('category', e.target.value)} placeholder="Arrays & Hashing" />
+              <datalist id="admin-categories">
+                {categories.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </Field>
+            <Field label="Giới hạn thời gian (ms)">
+              <input type="number" min={100} className={inputCls} value={form.timeLimitMs} onChange={(e) => set('timeLimitMs', e.target.value)} />
+            </Field>
+            <Field label="Giới hạn bộ nhớ (MB)">
+              <input type="number" min={16} className={inputCls} value={form.memoryMb} onChange={(e) => set('memoryMb', e.target.value)} />
+            </Field>
+            <div className="flex items-end pb-2">
               <Toggle
                 checked={form.isPublished ?? true}
                 onChange={(v) => set('isPublished', v)}
@@ -205,55 +198,49 @@ function ProblemEditor({ open, problem, categories, onClose, onSaved }) {
             </div>
           </div>
 
-          <div>
-            <div className="nav nav-pills nav-soft d-inline-flex bg-body-tertiary rounded-2 p-1">
-              <button type="button" className={tabCls('description')} onClick={() => setTab('description')}>
-                Đề bài (Markdown)
-              </button>
-              <button type="button" className={tabCls('starter')} onClick={() => setTab('starter')}>
-                Starter code
-              </button>
-            </div>
+          <div className="flex items-center gap-1 border-b border-[#E6E6E6] pb-2 dark:border-[#3E3E3E]">
+            <button type="button" className={tabCls('description')} onClick={() => setTab('description')}>
+              Đề bài (Markdown)
+            </button>
+            <button type="button" className={tabCls('starter')} onClick={() => setTab('starter')}>
+              Starter code
+            </button>
           </div>
 
           {tab === 'description' ? (
-            <div className="row g-3">
-              <div className="col-12 col-lg-6">
-                <textarea
-                  className={`${inputCls} font-monospace fs-xs lh-lg`}
-                  style={{ height: 360, resize: 'none' }}
-                  value={form.description}
-                  onChange={(e) => set('description', e.target.value)}
-                  placeholder="Viết mô tả đề bài bằng Markdown..."
-                />
-              </div>
-              <div className="col-12 col-lg-6">
-                <div className="overflow-y-auto rounded-2 border p-3" style={{ height: 360 }}>
-                  {form.description ? (
-                    <MarkdownRenderer content={form.description} />
-                  ) : (
-                    <p className="mb-0 text-body-secondary">Xem trước sẽ hiển thị ở đây.</p>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <textarea
+                className={`${inputCls} h-[360px] resize-none font-mono text-[13px] leading-relaxed`}
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
+                placeholder="Viết mô tả đề bài bằng Markdown..."
+              />
+              <div className="h-[360px] overflow-y-auto rounded-lg border border-[#E6E6E6] p-4 dark:border-[#3E3E3E]">
+                {form.description ? (
+                  <MarkdownRenderer content={form.description} />
+                ) : (
+                  <p className="text-sm text-neutral-400">Xem trước sẽ hiển thị ở đây.</p>
+                )}
               </div>
             </div>
           ) : (
             <div>
-              <div className="mb-2 d-flex gap-1">
+              <div className="mb-2 flex gap-1">
                 {LANGS.map((l) => (
                   <button
                     key={l.key}
                     type="button"
                     onClick={() => setLang(l.key)}
-                    className={`btn btn-sm rounded-pill ${lang === l.key ? 'btn-contrast' : 'btn-ghost'}`}
+                    className={`rounded-full px-3 py-1 text-sm cursor-pointer transition-colors ${
+                      lang === l.key ? 'bg-[#262626] text-white dark:bg-[#EFF1F6] dark:text-[#262626]' : 'bg-[#F0F0F0] text-neutral-600 dark:bg-[#333333] dark:text-neutral-300'
+                    }`}
                   >
                     {l.label}
                   </button>
                 ))}
               </div>
               <textarea
-                className={`${inputCls} font-monospace fs-xs lh-lg`}
-                style={{ height: 320, resize: 'none' }}
+                className={`${inputCls} h-[320px] resize-none font-mono text-[13px] leading-relaxed`}
                 value={form.code[lang]}
                 onChange={(e) => set('code', { ...form.code, [lang]: e.target.value })}
                 placeholder={`Mã khởi đầu cho ${LANGS.find((l) => l.key === lang).label}...`}
@@ -290,7 +277,7 @@ export default function AdminProblemsPage() {
         const items = res?.data?.content || res?.content || res?.data || [];
         setCategories([...new Set(items.map((p) => p.category).filter(Boolean))]);
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -309,6 +296,7 @@ export default function AdminProblemsPage() {
       .then(setData)
       .catch((e) => toast.push('error', errMsg(e, 'Không tải được danh sách bài tập')))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, q, difficulty, category]);
 
   useEffect(() => {
@@ -339,31 +327,25 @@ export default function AdminProblemsPage() {
         subtitle={data ? `${data.totalElements} bài tập trong hệ thống` : ' '}
         actions={
           <button type="button" className={btnPrimary} onClick={() => setEditor({ open: true, problem: null })}>
-            <Plus size={16} />
+            <Plus className="h-4 w-4" />
             Thêm bài tập
           </button>
         }
       />
 
-      <Card className="overflow-hidden">
-        <div className="d-flex flex-wrap align-items-center gap-2 p-3">
-          <div className="position-relative">
-            <Search size={16} className="position-absolute top-50 translate-middle-y text-body-secondary" style={{ left: 12 }} />
-            <input
-              className={`${inputCls} ps-5`}
-              style={{ width: 256 }}
-              placeholder="Tìm theo tiêu đề, slug..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      <Card>
+        <div className="flex flex-wrap items-center gap-2 p-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <input className={`${inputCls} w-64 pl-9`} placeholder="Tìm theo tiêu đề, slug..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <select className={`${selectCls} w-auto`} value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+          <select className={`${inputCls} w-auto`} value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
             <option value="">Mọi độ khó</option>
             <option>Easy</option>
             <option>Medium</option>
             <option>Hard</option>
           </select>
-          <select className={`${selectCls} w-auto`} value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select className={`${inputCls} w-auto`} value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">Mọi chủ đề</option>
             {categories.map((c) => (
               <option key={c}>{c}</option>
@@ -374,45 +356,43 @@ export default function AdminProblemsPage() {
         {loading && !data ? (
           <Spinner />
         ) : (
-          <div className="table-responsive">
-            <table className="table table-striped table-hover align-middle mb-0 border-top">
-              <thead>
-                <tr className="fs-xs text-body-secondary">
-                  <th className="ps-4">Tiêu đề</th>
-                  <th className="d-none d-md-table-cell">Chủ đề</th>
-                  <th>Độ khó</th>
-                  <th className="pe-4 text-end">Thao tác</th>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-y border-[#E6E6E6] text-xs text-neutral-500 dark:border-[#3E3E3E] dark:text-neutral-400">
+                <th className="px-5 py-2 font-normal">Tiêu đề</th>
+                <th className="hidden px-3 py-2 font-normal md:table-cell">Chủ đề</th>
+                <th className="px-3 py-2 font-normal">Độ khó</th>
+                <th className="px-5 py-2 text-right font-normal">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className={loading ? 'opacity-60' : ''}>
+              {items.map((p) => (
+                <tr key={p.id} className="odd:bg-[#F7F8FA] dark:odd:bg-[#333333]/50">
+                  <td className="px-5 py-3">
+                    <div className="text-sm font-medium">{p.title}</div>
+                    <div className="font-mono text-xs text-neutral-400">{p.slug}</div>
+                  </td>
+                  <td className="hidden px-3 py-3 text-sm text-neutral-500 md:table-cell dark:text-neutral-400">{p.category}</td>
+                  <td className="px-3 py-3">
+                    <DifficultyBadge difficulty={p.difficulty} size="xs" />
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button type="button" title="Quản lý test case" className={iconBtn} onClick={() => navigate(`/admin/testcases?problemId=${p.id}`)}>
+                        <FlaskConical className="h-4 w-4" />
+                      </button>
+                      <button type="button" title="Chỉnh sửa" className={iconBtn} onClick={() => setEditor({ open: true, problem: p })}>
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button type="button" title="Xóa" className={`${iconBtn} hover:!text-[#EF4743]`} onClick={() => setToDelete(p)}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className={loading ? 'opacity-50' : ''}>
-                {items.map((p) => (
-                  <tr key={p.id}>
-                    <td className="ps-4">
-                      <div className="fw-medium">{p.title}</div>
-                      <div className="font-monospace fs-xs text-body-secondary">{p.slug}</div>
-                    </td>
-                    <td className="d-none d-md-table-cell text-body-secondary">{p.category}</td>
-                    <td>
-                      <DifficultyBadge difficulty={p.difficulty} size="xs" />
-                    </td>
-                    <td className="pe-4">
-                      <div className="d-flex align-items-center justify-content-end gap-1">
-                        <button type="button" title="Quản lý test case" className={iconBtn} onClick={() => navigate(`/admin/testcases?problemId=${p.id}`)}>
-                          <FlaskConical size={16} />
-                        </button>
-                        <button type="button" title="Chỉnh sửa" className={iconBtn} onClick={() => setEditor({ open: true, problem: p })}>
-                          <Pencil size={16} />
-                        </button>
-                        <button type="button" title="Xóa" className={`${iconBtn} icon-btn-danger`} onClick={() => setToDelete(p)}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
         {!loading && !items.length && <Empty>Không có bài tập phù hợp.</Empty>}
         <Pagination page={page} totalPages={data?.totalPages} onChange={setPage} />

@@ -42,60 +42,66 @@ export default function AdminLayout() {
     window.location.reload();
   };
 
-  const linkCls = ({ isActive }) => `side-link ${isActive ? 'active' : ''}`;
+  const linkCls = ({ isActive }) =>
+    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+      isActive
+        ? 'bg-[#F0F0F0] font-medium text-[#262626] dark:bg-[#333333] dark:text-[#EFF1F6]'
+        : 'text-neutral-500 hover:bg-[#F7F8FA] hover:text-[#262626] dark:text-neutral-400 dark:hover:bg-[#303030] dark:hover:text-[#EFF1F6]'
+    }`;
 
   return (
     <ToastProvider>
-      <div className="d-flex min-vh-100 bg-canvas">
-        <aside className="sticky-top d-flex flex-column flex-shrink-0 vh-100 border-end bg-surface" style={{ maxWidth: 240 }}>
-          {/* Forces the full 240px width from md up; below md the sidebar collapses to an icon rail */}
-          <div className="d-none d-md-block" style={{ width: 239 }} />
-
-          <Link to="/admin" className="app-header d-flex align-items-center gap-2 border-bottom px-3 text-decoration-none text-body-emphasis">
+      <div className="flex min-h-screen bg-[#F0F0F0] text-[#262626] dark:bg-[#1A1A1A] dark:text-[#EFF1F6]">
+        <aside className="sticky top-0 flex h-screen w-14 shrink-0 flex-col border-r border-[#E6E6E6] bg-white dark:border-[#3E3E3E] dark:bg-[#282828] md:w-60">
+          <Link to="/admin" className="flex h-[50px] items-center gap-2 border-b border-[#E6E6E6] px-3 dark:border-[#3E3E3E]">
             <DapcodeLogo size="sm" />
-            <div className="d-none d-md-flex align-items-baseline gap-2">
-              <span className="fs-base fw-bold">LiệtCode</span>
-              <span className="badge rounded-1 px-2 bg-primary bg-opacity-25 text-primary text-uppercase fs-2xs fw-semibold">
+            <div className="hidden items-baseline gap-1.5 md:flex">
+              <span className="text-base font-bold tracking-tight">LiệtCode</span>
+              <span className="rounded bg-[#FFA116]/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[#FFA116]">
                 Admin
               </span>
             </div>
           </Link>
 
-          <nav className="flex-grow-1 d-flex flex-column gap-1 p-2">
+          <nav className="flex-1 space-y-1 p-2">
             {NAV.map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink key={item.to} to={item.to} end={item.end} className={linkCls} title={item.label}>
-                  <Icon size={18} className="flex-shrink-0" />
-                  <span className="d-none d-md-inline">{item.label}</span>
+                  <Icon className="h-[18px] w-[18px] shrink-0" />
+                  <span className="hidden md:inline">{item.label}</span>
                 </NavLink>
               );
             })}
           </nav>
 
-          <div className="d-flex flex-column gap-1 border-top p-2">
+          <div className="space-y-1 border-t border-[#E6E6E6] p-2 dark:border-[#3E3E3E]">
             <Link to="/roadmap" className={linkCls({ isActive: false })} title="Về trang học viên">
-              <ArrowLeft size={18} className="flex-shrink-0" />
-              <span className="d-none d-md-inline">Trang học viên</span>
+              <ArrowLeft className="h-[18px] w-[18px] shrink-0" />
+              <span className="hidden md:inline">Trang học viên</span>
             </Link>
-            <button type="button" onClick={toggleTheme} className={`${linkCls({ isActive: false })} cursor-pointer`}>
-              {isDark ? <Sun size={18} className="flex-shrink-0" /> : <Moon size={18} className="flex-shrink-0" />}
-              <span className="d-none d-md-inline">{isDark ? 'Chế độ sáng' : 'Chế độ tối'}</span>
+            <button type="button" onClick={toggleTheme} className={`${linkCls({ isActive: false })} w-full cursor-pointer`}>
+              {isDark ? <Sun className="h-[18px] w-[18px] shrink-0" /> : <Moon className="h-[18px] w-[18px] shrink-0" />}
+              <span className="hidden md:inline">{isDark ? 'Chế độ sáng' : 'Chế độ tối'}</span>
             </button>
-            <div className="d-flex align-items-center gap-2 rounded-2 px-3 py-1">
-              <div className="avatar avatar-sm">
-                {me?.avatarUrl ? <img src={me.avatarUrl} alt={name} referrerPolicy="no-referrer" /> : name.charAt(0).toUpperCase()}
+            <div className="flex items-center gap-2 rounded-lg px-3 py-2">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#FFA116] text-xs font-semibold text-white">
+                {me?.avatarUrl ? (
+                  <img src={me.avatarUrl} alt={name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                ) : (
+                  name.charAt(0).toUpperCase()
+                )}
               </div>
-              <span className="d-none d-md-inline flex-grow-1 min-w-0 text-truncate">{name}</span>
-              <button type="button" onClick={logout} title="Đăng xuất" className="icon-btn icon-btn-danger d-none d-md-inline-flex">
-                <LogOut size={16} />
+              <span className="hidden flex-1 truncate text-sm md:inline">{name}</span>
+              <button type="button" onClick={logout} title="Đăng xuất" className="hidden cursor-pointer text-neutral-400 hover:text-[#EF4743] md:inline">
+                <LogOut className="h-4 w-4" />
               </button>
             </div>
           </div>
         </aside>
 
-        <main className="flex-grow-1 min-w-0 p-4">
-          <div className="mx-auto" style={{ maxWidth: 1200 }}>
+        <main className="min-w-0 flex-1 p-6">
+          <div className="mx-auto max-w-[1200px]">
             <Outlet />
           </div>
         </main>

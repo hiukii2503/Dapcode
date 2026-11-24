@@ -10,8 +10,14 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem('dapcode_theme', theme);
-    // Bootstrap 5.3 color modes
-    document.documentElement.dataset.bsTheme = theme;
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
   }, [theme]);
 
   const toggleTheme = () => {

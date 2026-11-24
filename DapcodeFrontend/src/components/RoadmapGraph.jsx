@@ -39,10 +39,10 @@ export default function RoadmapGraph({
   const edgeStrokeColor = isDark ? '#595959' : '#D1D1D1';
 
   return (
-    <div className="position-relative w-100 overflow-x-auto rounded-4 border bg-surface p-4">
+    <div className="relative w-full overflow-x-auto overflow-y-visible rounded-2xl border border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#FFFFFF] dark:bg-[#282828] p-6 transition-colors duration-150">
       {/* Subtle Dot Grid Background */}
-      <div
-        className="position-relative mx-auto"
+      <div 
+        className="relative mx-auto"
         style={{
           width: `${CANVAS_WIDTH}px`,
           height: `${CANVAS_HEIGHT}px`,
@@ -52,7 +52,7 @@ export default function RoadmapGraph({
       >
         {/* SVG Bezier Edges */}
         <svg
-          className="position-absolute top-0 start-0 pe-none"
+          className="absolute inset-0 pointer-events-none"
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
         >
@@ -124,24 +124,28 @@ export default function RoadmapGraph({
                 width: `${NODE_WIDTH}px`,
                 height: `${NODE_HEIGHT}px`,
               }}
-              className={`card justify-content-between rounded-3 p-2 cursor-pointer hover-bg ${
-                isCompletedAll ? 'bg-success-subtle border-success-subtle' : ''
+              className={`group flex flex-col justify-between rounded-xl border bg-white dark:bg-[#333333] p-2.5 cursor-pointer transition-colors ${
+                isCompletedAll
+                  ? 'border-[#B7E4C7] dark:border-[#166534] bg-[#E8F7EE]/40 dark:bg-[#14532D]/15'
+                  : 'border-[#E6E6E6] dark:border-[#3E3E3E] hover:border-neutral-500 dark:hover:border-neutral-400'
               }`}
             >
               {/* Node Title & Counter */}
-              <div className="d-flex align-items-center justify-content-between gap-1">
-                <span className="text-truncate fs-xs fw-semibold text-body-emphasis">
+              <div className="flex items-center justify-between space-x-1">
+                <span className="truncate text-xs font-semibold text-neutral-800 dark:text-neutral-100 group-hover:text-neutral-950 dark:group-hover:text-white transition-colors">
                   {node.name}
                 </span>
-                <span className="fs-2xs font-monospace text-body-secondary flex-shrink-0">
+                <span className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 flex-shrink-0">
                   {stats.count}/{stats.total}
                 </span>
               </div>
 
               {/* Node Mini Progress Bar */}
-              <div className="progress border mt-1">
+              <div className="w-full h-1.5 rounded-full bg-[#F7F8FA] dark:bg-[#282828] border border-[#E6E6E6] dark:border-[#3E3E3E] overflow-hidden mt-1">
                 <div
-                  className={`progress-bar ${isCompletedAll ? 'bg-success' : 'bg-contrast'}`}
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    isCompletedAll ? 'bg-[#2CBB5D] dark:bg-[#2CBB5D]' : 'bg-neutral-800 dark:bg-neutral-200'
+                  }`}
                   style={{ width: `${stats.percent}%` }}
                 />
               </div>

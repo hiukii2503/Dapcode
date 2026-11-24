@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Spinner } from 'react-bootstrap';
 import { loginWithGoogle, getCurrentUser } from '../api/auth';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
@@ -14,6 +13,27 @@ export default function AuthCallbackPage() {
     const handleCallback = async () => {
       try {
         const searchParams = new URLSearchParams(location.search);
+        const isBanned = searchParams.get('banned') === 'true';
+        if (isBanned) {
+          const reason =
+            searchParams.get('reason') ||
+            'Vi phạm quy định và điều khoản sử dụng của hệ thống.';
+          const email = searchParams.get('email') || null;
+          localStorage.removeItem('dapcode_token');
+          localStorage.removeItem('dapcode_user');
+          sessionStorage.setItem(
+            'dapcode_ban_info',
+            JSON.stringify({ reason, email })
+          );
+          const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
+          sessionStorage.removeItem('dapcode_auth_return');
+          navigate(returnUrl, { replace: true });
+          window.dispatchEvent(
+            new CustomEvent('dapcode-user-banned', { detail: { reason, email } })
+          );
+          return;
+        }
+
         const jwtToken = searchParams.get('token');
         if (jwtToken) {
           localStorage.setItem('dapcode_token', jwtToken);
@@ -66,7 +86,7 @@ export default function AuthCallbackPage() {
             localStorage.setItem('dapcode_user', JSON.stringify(userObj));
           }
           setStatus('success');
-
+          
           const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
           sessionStorage.removeItem('dapcode_auth_return');
           setTimeout(() => {
@@ -78,6 +98,24 @@ export default function AuthCallbackPage() {
         }
       } catch (err) {
         console.error('Lỗi xác thực OAuth:', err);
+        if (err.response?.data?.code === 1008) {
+          const reason =
+            err.response?.data?.message ||
+            'Vi phạm quy định và điều khoản sử dụng của hệ thống.';
+          localStorage.removeItem('dapcode_token');
+          localStorage.removeItem('dapcode_user');
+          sessionStorage.setItem(
+            'dapcode_ban_info',
+            JSON.stringify({ reason })
+          );
+          const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
+          sessionStorage.removeItem('dapcode_auth_return');
+          navigate(returnUrl, { replace: true });
+          window.dispatchEvent(
+            new CustomEvent('dapcode-user-banned', { detail: { reason } })
+          );
+          return;
+        }
         setStatus('error');
         setErrorMessage(
           err.response?.data?.message || err.message || 'Xác thực Google thất bại. Vui lòng thử lại.'
@@ -88,41 +126,43 @@ export default function AuthCallbackPage() {
     handleCallback();
   }, [location, navigate]);
 
-  const iconCircle = 'd-flex align-items-center justify-content-center rounded-circle border';
-
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center p-3">
-      <div className="w-100 rounded-2 border bg-surface p-5 text-center" style={{ maxWidth: 448 }}>
+    <div className="min-h-screen flex items-center justify-center bg-[#FFFFFF] dark:bg-[#1A1A1A] p-4 text-[#262626] dark:text-[#EFF1F6]">
+      <div className="w-full max-w-md rounded-lg border border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#FFFFFF] dark:bg-[#282828] p-8 text-center">
         {status === 'loading' && (
-          <div className="d-flex flex-column align-items-center gap-3">
-            <Spinner animation="border" />
-            <h2 className="fs-sm fw-semibold mb-0">Đang xác thực tài khoản Google...</h2>
-            <p className="fs-xs text-body-secondary mb-0">
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-8 w-8 text-neutral-700 dark:text-neutral-300 animate-spin" />
+            <h2 className="text-sm font-semibold">Đang xác thực tài khoản Google...</h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               Vui lòng đợi giây lát trong khi LiệtCode đồng bộ tài khoản của bạn.
             </p>
           </div>
         )}
 
         {status === 'success' && (
-          <div className="d-flex flex-column align-items-center gap-3">
-            <div className={`${iconCircle} bg-success-subtle border-success-subtle text-success`} style={{ width: 48, height: 48 }}>
-              <CheckCircle2 size={24} />
+          <div className="flex flex-col items-center space-y-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E8F7EE] dark:bg-[#14532D]/20 text-[#2CBB5D] dark:text-[#2CBB5D] border border-[#B7E4C7] dark:border-[#166534]/40">
+              <CheckCircle2 className="h-6 w-6" />
             </div>
-            <h2 className="fs-sm fw-semibold mb-0">Đăng nhập thành công!</h2>
-            <p className="fs-xs text-body-secondary mb-0">Đang chuyển hướng về trang học tập...</p>
+            <h2 className="text-sm font-semibold">Đăng nhập thành công!</h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Đang chuyển hướng về trang học tập...
+            </p>
           </div>
         )}
 
         {status === 'error' && (
-          <div className="d-flex flex-column align-items-center gap-3">
-            <div className={`${iconCircle} bg-danger-subtle border-danger-subtle text-danger`} style={{ width: 48, height: 48 }}>
-              <AlertCircle size={24} />
+          <div className="flex flex-col items-center space-y-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FDEDED] dark:bg-[#7F1D1D]/20 text-[#EF4743] dark:text-[#FF6B68] border border-[#FECACA] dark:border-[#991B1B]/40">
+              <AlertCircle className="h-6 w-6" />
             </div>
-            <h2 className="fs-sm fw-semibold text-danger mb-0">Đăng nhập thất bại</h2>
-            <p className="fs-xs text-body-secondary mb-0">{errorMessage}</p>
+            <h2 className="text-sm font-semibold text-[#EF4743] dark:text-[#FF6B68]">
+              Đăng nhập thất bại
+            </h2>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">{errorMessage}</p>
             <button
               onClick={() => navigate('/roadmap', { replace: true })}
-              className="btn btn-sm btn-contrast mt-2"
+              className="mt-2 rounded-lg bg-[#262626] hover:bg-[#3C3C3C] dark:bg-[#EFF1F6] dark:hover:bg-[#E6E6E6] px-4 py-2 text-xs font-medium text-[#F7F8FA] dark:text-[#262626] transition-colors"
             >
               Quay lại trang chủ
             </button>

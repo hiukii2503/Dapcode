@@ -1,8 +1,7 @@
 import React from 'react';
 import Editor from '@monaco-editor/react';
-import { RotateCcw, Sparkles, Code2 } from 'lucide-react';
+import { RotateCcw, Code2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { FEATURES } from '../config/features';
 
 export const SUPPORTED_LANGUAGES = [
   { id: 71, key: 'python', label: 'Python 3', monacoLang: 'python' },
@@ -70,61 +69,45 @@ export default function CodeEditor({
   };
 
   return (
-    <div className="d-flex h-100 flex-column bg-surface rounded-2 overflow-hidden">
+    <div className="flex h-full flex-col bg-[#FFFFFF] dark:bg-[#282828] rounded-lg overflow-hidden">
       {/* Editor Toolbar */}
-      <div
-        className="d-flex align-items-center justify-content-between border-bottom bg-body-tertiary px-3 flex-shrink-0"
-        style={{ height: 40 }}
-      >
+      <div className="flex h-10 items-center justify-between border-b border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333] px-4">
         {/* Language selector */}
-        <div className="d-flex align-items-center gap-3">
-          <div className="d-flex align-items-center gap-2 fs-xs text-body-secondary">
-            <Code2 size={14} />
-            <span className="fw-medium d-none d-sm-inline fs-2xs">Ngôn ngữ:</span>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+            <Code2 className="h-3.5 w-3.5 text-neutral-700 dark:text-neutral-300" />
+            <span className="font-medium hidden sm:inline text-[11px]">Ngôn ngữ:</span>
           </div>
           <select
             value={language}
             onChange={(e) => onLanguageChange(e.target.value)}
-            className="form-select form-select-sm w-auto fs-xs fw-medium bg-surface border"
+            className="rounded-lg border border-[#E6E6E6] dark:border-[#3E3E3E] bg-white dark:bg-[#282828] px-2.5 py-1 text-xs font-medium text-neutral-800 dark:text-neutral-200 focus:outline-none"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
-              <option key={lang.key} value={lang.key}>
+              <option key={lang.key} value={lang.key} className="bg-white dark:bg-[#282828] text-neutral-800 dark:text-neutral-200">
                 {lang.label}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Right Tools: AI Tutor & Reset */}
-        <div className="d-flex align-items-center gap-2">
-          {/* Socratic AI Tutor Button (wrapper keeps the tooltip on a disabled .btn) */}
-          <span className="d-inline-block" title={FEATURES.aiTutor ? undefined : 'Tính năng đang phát triển'}>
-            <button
-              type="button"
-              onClick={onOpenAiTutor}
-              disabled={!FEATURES.aiTutor}
-              className="btn btn-sm btn-contrast d-inline-flex align-items-center gap-1 fs-xs"
-            >
-              <Sparkles size={14} />
-              <span>AI Tutor</span>
-            </button>
-          </span>
-
+        {/* Right Tools: Reset */}
+        <div className="flex items-center space-x-2">
           {/* Reset Code */}
           <button
             type="button"
             onClick={onResetCode}
             title="Khôi phục mã mẫu ban đầu"
-            className="btn btn-sm btn-ghost border d-inline-flex align-items-center gap-1 fs-xs"
+            className="flex items-center space-x-1 rounded-lg bg-white hover:bg-neutral-100 dark:bg-[#282828] dark:hover:bg-[#333333] border border-[#E6E6E6] dark:border-[#3E3E3E] px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
           >
-            <RotateCcw size={14} />
-            <span className="d-none d-sm-inline">Reset</span>
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Reset</span>
           </button>
         </div>
       </div>
 
       {/* Monaco Editor Container */}
-      <div className="flex-grow-1 w-100 position-relative min-h-0">
+      <div className="flex-1 w-full relative">
         <Editor
           height="100%"
           language={currentLangObj.monacoLang}
