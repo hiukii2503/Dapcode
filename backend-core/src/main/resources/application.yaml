@@ -49,7 +49,7 @@ judge0:
   read-timeout-ms: 10000
 
 jwt:
-  secret: ${JWT_SECRET:K7vQ8zP2mR4wX9yL1tN5bC0fG3jH6kE8sA1dF4gJ7hL=}
+  secret: ${JWT_SECRET:dapcode-local-dev-jwt-secret-key-change-in-env-256bit}
   expiration-ms: 86400000
 
 app:

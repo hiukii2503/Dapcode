@@ -1,22 +1,21 @@
 package com.dapcode.backend_core.config;
 
-import org.springframework.stereotype.Component;
-
-import com.dapcode.backend_core.entity.Users;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-
-import io.jsonwebtoken.security.Keys;
-
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import com.dapcode.backend_core.entity.Users;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -30,10 +29,16 @@ public class JwtTokenProvider {
     private long jwtExpiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = (jwtSecret != null) ? jwtSecret.getBytes(StandardCharsets.UTF_8) : new byte[0];
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("Cấu hình bảo mật jwt.secret chưa được thiết lập!");
+        }
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
-            log.warn("JWT secret key is shorter than 256 bits ({} bytes). Using fallback secure key.", keyBytes.length);
-            keyBytes = "K7vQ8zP2mR4wX9yL1tN5bC0fG3jH6kE8sA1dF4gJ7hL=".getBytes(StandardCharsets.UTF_8);
+            try {
+                keyBytes = MessageDigest.getInstance("SHA-256").digest(keyBytes);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("Không thể chuẩn hóa khóa SHA-256 cho JWT", e);
+            }
         }
         return Keys.hmacShaKeyFor(keyBytes);
     }

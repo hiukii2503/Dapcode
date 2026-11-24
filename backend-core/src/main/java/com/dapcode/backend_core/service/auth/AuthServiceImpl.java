@@ -133,10 +133,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(ErrorCode.USER_LOCKED);
         }
 
-        boolean passwordMatches = (user.getPasswordHash() != null && passwordEncoder.matches(password, user.getPasswordHash()))
-                || "admin123".equals(password);
-
-        if (!passwordMatches) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
