@@ -29,12 +29,12 @@ export default function ProgressSidebar({ problems = [], completedSlugs = new Se
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-lg bg-white dark:bg-[#282828] p-4">
-        <div className="flex items-center gap-5">
-          <div className="relative flex shrink-0 items-center justify-center">
-            <svg className="h-28 w-28 -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r={radius} fill="none" strokeWidth="5" className="stroke-[#E6E6E6] dark:stroke-[#3E3E3E]" />
+    <div className="d-flex flex-column gap-3">
+      <div className="card border-0 p-3">
+        <div className="d-flex align-items-center gap-4">
+          <div className="position-relative d-flex flex-shrink-0 align-items-center justify-content-center">
+            <svg width={112} height={112} viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx="50" cy="50" r={radius} fill="none" strokeWidth="5" style={{ stroke: 'var(--bs-border-color)' }} />
               <circle
                 cx="50"
                 cy="50"
@@ -45,24 +45,24 @@ export default function ProgressSidebar({ problems = [], completedSlugs = new Se
                 stroke="#FFA116"
                 strokeDasharray={circumference}
                 strokeDashoffset={offset}
-                className="transition-all duration-700 ease-out"
+                style={{ transition: 'stroke-dashoffset .7s ease-out' }}
               />
             </svg>
-            <div className="absolute flex flex-col items-center leading-tight">
-              <span className="text-2xl font-semibold text-[#262626] dark:text-[#EFF1F6]">{solved}</span>
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">/ {total}</span>
-              <span className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-400">Solved</span>
+            <div className="position-absolute d-flex flex-column align-items-center lh-sm">
+              <span className="fs-2xl fw-semibold text-body-emphasis">{solved}</span>
+              <span className="fs-xs text-body-secondary">/ {total}</span>
+              <span className="mt-1 fs-2xs text-body-secondary">Solved</span>
             </div>
           </div>
 
-          <div className="flex-1 space-y-2">
+          <div className="flex-grow-1 d-flex flex-column gap-2">
             {rows.map((r) => (
-              <div key={r.label} className="rounded-md bg-[#F7F8FA] dark:bg-[#333333] px-3 py-1.5">
-                <div className="text-xs font-medium" style={{ color: r.color }}>
+              <div key={r.label} className="rounded-1 bg-body-tertiary px-3 py-2">
+                <div className="fs-xs fw-medium" style={{ color: r.color }}>
                   {r.label}
                 </div>
-                <div className="text-xs text-neutral-600 dark:text-neutral-300">
-                  <span className="font-medium text-[#262626] dark:text-[#EFF1F6]">{r.done}</span>/{r.total}
+                <div className="fs-xs text-body-secondary">
+                  <span className="fw-medium text-body-emphasis">{r.done}</span>/{r.total}
                 </div>
               </div>
             ))}
@@ -70,13 +70,13 @@ export default function ProgressSidebar({ problems = [], completedSlugs = new Se
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg bg-white dark:bg-[#282828] px-4 py-3">
-        <div className="flex items-center space-x-2 text-sm text-neutral-600 dark:text-neutral-300">
-          <Flame className="h-5 w-5 text-[#FFA116]" />
+      <div className="card border-0 flex-row align-items-center justify-content-between px-3 py-3">
+        <div className="d-flex align-items-center gap-2 text-body-secondary">
+          <Flame size={20} className="text-primary" />
           <span>Daily Streak</span>
         </div>
-        <span className="text-sm font-semibold text-[#262626] dark:text-[#EFF1F6]">
-          {streak} <span className="text-xs font-normal text-neutral-500">days</span>
+        <span className="fw-semibold text-body-emphasis">
+          {streak} <span className="fs-xs fw-normal text-body-secondary">days</span>
         </span>
       </div>
     </div>

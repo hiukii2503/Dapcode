@@ -15,7 +15,6 @@ export default function CodeEditor({
   language,
   onLanguageChange,
   onResetCode,
-  onOpenAiTutor,
 }) {
   const { isDark } = useTheme();
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.key === language) || SUPPORTED_LANGUAGES[0];
@@ -69,22 +68,25 @@ export default function CodeEditor({
   };
 
   return (
-    <div className="flex h-full flex-col bg-[#FFFFFF] dark:bg-[#282828] rounded-lg overflow-hidden">
+    <div className="d-flex h-100 flex-column bg-surface rounded-2 overflow-hidden">
       {/* Editor Toolbar */}
-      <div className="flex h-10 items-center justify-between border-b border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333] px-4">
+      <div
+        className="d-flex align-items-center justify-content-between border-bottom bg-body-tertiary px-3 flex-shrink-0"
+        style={{ height: 40 }}
+      >
         {/* Language selector */}
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-            <Code2 className="h-3.5 w-3.5 text-neutral-700 dark:text-neutral-300" />
-            <span className="font-medium hidden sm:inline text-[11px]">Ngôn ngữ:</span>
+        <div className="d-flex align-items-center gap-3">
+          <div className="d-flex align-items-center gap-2 fs-xs text-body-secondary">
+            <Code2 size={14} />
+            <span className="fw-medium d-none d-sm-inline fs-2xs">Ngôn ngữ:</span>
           </div>
           <select
             value={language}
             onChange={(e) => onLanguageChange(e.target.value)}
-            className="rounded-lg border border-[#E6E6E6] dark:border-[#3E3E3E] bg-white dark:bg-[#282828] px-2.5 py-1 text-xs font-medium text-neutral-800 dark:text-neutral-200 focus:outline-none"
+            className="form-select form-select-sm w-auto fs-xs fw-medium bg-surface border cursor-pointer"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
-              <option key={lang.key} value={lang.key} className="bg-white dark:bg-[#282828] text-neutral-800 dark:text-neutral-200">
+              <option key={lang.key} value={lang.key}>
                 {lang.label}
               </option>
             ))}
@@ -92,22 +94,21 @@ export default function CodeEditor({
         </div>
 
         {/* Right Tools: Reset */}
-        <div className="flex items-center space-x-2">
-          {/* Reset Code */}
+        <div className="d-flex align-items-center gap-2">
           <button
             type="button"
             onClick={onResetCode}
             title="Khôi phục mã mẫu ban đầu"
-            className="flex items-center space-x-1 rounded-lg bg-white hover:bg-neutral-100 dark:bg-[#282828] dark:hover:bg-[#333333] border border-[#E6E6E6] dark:border-[#3E3E3E] px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
+            className="btn btn-sm btn-ghost border d-inline-flex align-items-center gap-1 fs-xs"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Reset</span>
+            <RotateCcw size={14} />
+            <span className="d-none d-sm-inline">Reset</span>
           </button>
         </div>
       </div>
 
       {/* Monaco Editor Container */}
-      <div className="flex-1 w-full relative">
+      <div className="flex-grow-1 w-100 position-relative min-h-0">
         <Editor
           height="100%"
           language={currentLangObj.monacoLang}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, CornerDownLeft, Loader2 } from 'lucide-react';
+import { Modal, Spinner } from 'react-bootstrap';
+import { Search, CornerDownLeft } from 'lucide-react';
 import DifficultyBadge from './DifficultyBadge';
 import { getProblems } from '../api/problems';
 
@@ -46,27 +47,13 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
           p.slug?.toLowerCase().includes(query.toLowerCase())
       ).slice(0, 12);
 
-  // Auto focus input when opened
+  // Reset when opened (Escape / backdrop close is handled by Modal)
   useEffect(() => {
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
-
-  // Handle global Escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen, onClose]);
 
   // Keyboard navigation inside modal
   const handleInputKeyDown = (e) => {
@@ -86,83 +73,68 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/40 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
-      <div 
-        className="w-full max-w-xl rounded-2xl border border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#FFFFFF] dark:bg-[#282828] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Search Input Bar */}
-        <div className="flex items-center px-4 py-3.5 border-b border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333]">
-          <Search className="h-4 w-4 text-neutral-400 mr-3 flex-shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedIndex(0);
-            }}
-            onKeyDown={handleInputKeyDown}
-            placeholder="Tìm kiếm bài tập theo tên, danh mục hoặc slug..."
-            className="flex-1 bg-transparent text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none"
-          />
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin text-neutral-400 mr-2" />}
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1 text-neutral-400 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-[#F7F8FA] dark:hover:bg-[#333333] cursor-pointer"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Results List */}
-        <div className="max-h-80 overflow-y-auto p-2 divide-y divide-[#E6E6E6]/60 dark:divide-[#3E3E3E]/60">
-          {filteredProblems.length > 0 ? (
-            filteredProblems.map((problem, idx) => {
-              const isSelected = selectedIndex === idx;
-              return (
-                <div
-                  key={problem.slug || problem.id}
-                  onClick={() => {
-                    onClose();
-                    navigate(`/problems/${problem.slug}`);
-                  }}
-                  onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-colors ${
-                    isSelected 
-                      ? 'bg-[#F7F8FA] dark:bg-[#333333] text-[#262626] dark:text-[#EFF1F6] border border-[#E6E6E6] dark:border-[#3E3E3E]' 
-                      : 'text-neutral-700 dark:text-neutral-300 hover:bg-[#F7F8FA] dark:hover:bg-[#333333] border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                      {problem.title}
-                    </span>
-                    <span className="text-[11px] text-neutral-400 dark:text-neutral-500 hidden sm:inline">
-                      {problem.category}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center space-x-2 flex-shrink-0">
-                    <DifficultyBadge difficulty={problem.difficulty} size="xs" />
-                    {isSelected && (
-                      <CornerDownLeft className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="py-8 text-center text-xs text-neutral-400 dark:text-neutral-500">
-              {isLoading ? 'Đang tải dữ liệu bài tập từ database...' : `Không tìm thấy bài tập nào với từ khóa "${query}".`}
-            </div>
-          )}
-        </div>
+    <Modal
+      show={isOpen}
+      onHide={onClose}
+      onEntered={() => inputRef.current?.focus()}
+      dialogClassName="mt-5 pt-sm-5"
+      contentClassName="overflow-hidden"
+    >
+      {/* Search Input Bar */}
+      <div className="d-flex align-items-center gap-3 px-3 py-3 border-bottom bg-body-tertiary">
+        <Search size={16} className="text-body-secondary flex-shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedIndex(0);
+          }}
+          onKeyDown={handleInputKeyDown}
+          placeholder="Tìm kiếm bài tập theo tên, danh mục hoặc slug..."
+          className="form-control flex-grow-1 border-0 bg-transparent shadow-none p-0"
+        />
+        {isLoading && <Spinner animation="border" size="sm" className="text-body-secondary" />}
+        <button type="button" className="btn-close" aria-label="Đóng" onClick={onClose} />
       </div>
-    </div>
+
+      {/* Results List */}
+      <div className="overflow-y-auto p-2" style={{ maxHeight: 320 }}>
+        {filteredProblems.length > 0 ? (
+          filteredProblems.map((problem, idx) => {
+            const isSelected = selectedIndex === idx;
+            return (
+              <div
+                key={problem.slug || problem.id}
+                onClick={() => {
+                  onClose();
+                  navigate(`/problems/${problem.slug}`);
+                }}
+                onMouseEnter={() => setSelectedIndex(idx)}
+                className={`d-flex align-items-center justify-content-between gap-2 px-3 py-2 rounded-3 cursor-pointer ${
+                  isSelected ? 'bg-body-tertiary text-body-emphasis' : ''
+                }`}
+              >
+                <div className="d-flex align-items-center gap-3 min-w-0">
+                  <span className="fs-xs fw-medium text-body-emphasis text-truncate">{problem.title}</span>
+                  <span className="fs-2xs text-body-secondary d-none d-sm-inline">{problem.category}</span>
+                </div>
+
+                <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                  <DifficultyBadge difficulty={problem.difficulty} size="xs" />
+                  {isSelected && <CornerDownLeft size={14} className="text-body-secondary" />}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="py-5 text-center fs-xs text-body-secondary">
+            {isLoading ? 'Đang tải dữ liệu bài tập từ database...' : `Không tìm thấy bài tập nào với từ khóa "${query}".`}
+          </div>
+        )}
+      </div>
+    </Modal>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Loader2, CheckCircle2, Shuffle, ChevronDown, X } from 'lucide-react';
+import { Spinner } from 'react-bootstrap';
+import { Search, CheckCircle2, Shuffle, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ProgressSidebar from '../components/ProgressSidebar';
 import DifficultyBadge from '../components/DifficultyBadge';
@@ -21,8 +22,12 @@ const getUserCompletedKey = () => {
   }
 };
 
-const selectCls =
-  'appearance-none rounded-lg bg-[#F0F0F0] dark:bg-[#333333] pl-3 pr-8 py-1.5 text-sm text-neutral-700 dark:text-neutral-200 hover:bg-[#E6E6E6] dark:hover:bg-[#3E3E3E] focus:outline-none cursor-pointer transition-colors';
+const selectCls = 'form-select form-select-sm w-auto cursor-pointer';
+
+const chipCls = (active) =>
+  `btn btn-sm rounded-pill flex-shrink-0 d-inline-flex align-items-center gap-2 px-3 ${
+    active ? 'btn-contrast' : 'btn-ghost bg-surface text-body-secondary'
+  }`;
 
 export default function ProblemsPage() {
   const location = useLocation();
@@ -71,7 +76,6 @@ export default function ProblemsPage() {
   };
 
   useEffect(() => {
-    // Xóa key dùng chung cũ để không bị dính dữ liệu giữa các tài khoản
     localStorage.removeItem('dapcode_completed');
     loadSolvedSlugs();
 
@@ -150,25 +154,25 @@ export default function ProblemsPage() {
     searchQuery || selectedDifficulty !== 'ALL' || selectedStatus !== 'ALL' || selectedTopic !== 'ALL';
 
   return (
-    <div className="min-h-screen bg-[#F0F0F0] dark:bg-[#1A1A1A] text-[#262626] dark:text-[#EFF1F6] flex flex-col">
+    <div className="d-flex flex-column min-vh-100 bg-canvas">
       <Navbar />
 
-      <main className="flex-1 mx-auto w-full max-w-[1300px] px-4 py-6">
+      <main className="flex-grow-1 app-container mx-auto w-100 px-3 py-4">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-32 space-y-3">
-            <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">Đang tải dữ liệu...</span>
+          <div className="d-flex flex-column align-items-center justify-content-center gap-3 py-5 my-5 text-body-secondary">
+            <Spinner animation="border" size="sm" />
+            <span>Đang tải dữ liệu...</span>
           </div>
         ) : isGraph ? (
-          <div className="space-y-4">
-            <div className="flex items-end justify-between">
+          <div className="d-flex flex-column gap-3">
+            <div className="d-flex align-items-end justify-content-between">
               <div>
-                <h1 className="text-xl font-bold">LiệtCode 150 Roadmap</h1>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                <h1 className="fs-xl fw-bold mb-0">LiệtCode 150 Roadmap</h1>
+                <p className="mt-1 mb-0 text-body-secondary">
                   Lộ trình học theo chủ đề — bấm vào một nút để xem danh sách bài tập.
                 </p>
               </div>
-              <span className="text-sm text-neutral-500 dark:text-neutral-400">
+              <span className="text-body-secondary">
                 {completedSlugs.size}/{allProblems.length} Solved
               </span>
             </div>
@@ -179,18 +183,10 @@ export default function ProblemsPage() {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
-            <div className="min-w-0 space-y-4">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <button
-                  type="button"
-                  onClick={() => setSelectedTopic('ALL')}
-                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm transition-colors cursor-pointer ${
-                    selectedTopic === 'ALL'
-                      ? 'bg-[#262626] text-white dark:bg-[#EFF1F6] dark:text-[#262626]'
-                      : 'bg-white dark:bg-[#282828] text-neutral-600 dark:text-neutral-300 hover:bg-[#E6E6E6] dark:hover:bg-[#333333]'
-                  }`}
-                >
+          <div className="row g-4 align-items-start">
+            <div className="col-12 col-lg-8 col-xl-9 min-w-0 d-flex flex-column gap-3">
+              <div className="d-flex align-items-center gap-2 overflow-x-auto pb-1">
+                <button type="button" onClick={() => setSelectedTopic('ALL')} className={chipCls(selectedTopic === 'ALL')}>
                   All Topics
                 </button>
                 {topics.map(([name, count]) => (
@@ -198,49 +194,40 @@ export default function ProblemsPage() {
                     key={name}
                     type="button"
                     onClick={() => setSelectedTopic(name === selectedTopic ? 'ALL' : name)}
-                    className={`shrink-0 flex items-center space-x-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors cursor-pointer ${
-                      selectedTopic === name
-                        ? 'bg-[#262626] text-white dark:bg-[#EFF1F6] dark:text-[#262626]'
-                        : 'bg-white dark:bg-[#282828] text-neutral-600 dark:text-neutral-300 hover:bg-[#E6E6E6] dark:hover:bg-[#333333]'
-                    }`}
+                    className={chipCls(selectedTopic === name)}
                   >
                     <span>{name}</span>
-                    <span className="text-xs opacity-60">{count}</span>
+                    <span className="fs-xs opacity-50">{count}</span>
                   </button>
                 ))}
               </div>
 
-              <div className="rounded-lg bg-white dark:bg-[#282828]">
-                <div className="flex flex-wrap items-center gap-2 p-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <div className="card border-0">
+                <div className="d-flex flex-wrap align-items-center gap-2 p-3">
+                  <div className="position-relative">
+                    <Search size={16} className="position-absolute top-50 start-0 translate-middle-y ms-2 text-body-secondary" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search questions"
-                      className="w-56 rounded-lg bg-[#F0F0F0] dark:bg-[#333333] py-1.5 pl-9 pr-3 text-sm placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                      className="form-control form-control-sm"
+                      style={{ width: 224, paddingLeft: '2rem' }}
                     />
                   </div>
 
-                  <div className="relative">
-                    <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)} className={selectCls}>
-                      <option value="ALL">Difficulty</option>
-                      <option value="EASY">Easy</option>
-                      <option value="MEDIUM">Medium</option>
-                      <option value="HARD">Hard</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
-                  </div>
+                  <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)} className={selectCls}>
+                    <option value="ALL">Difficulty</option>
+                    <option value="EASY">Easy</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HARD">Hard</option>
+                  </select>
 
-                  <div className="relative">
-                    <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={selectCls}>
-                      <option value="ALL">Status</option>
-                      <option value="TODO">Todo</option>
-                      <option value="SOLVED">Solved</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
-                  </div>
+                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={selectCls}>
+                    <option value="ALL">Status</option>
+                    <option value="TODO">Todo</option>
+                    <option value="SOLVED">Solved</option>
+                  </select>
 
                   {hasFilter && (
                     <button
@@ -251,9 +238,9 @@ export default function ProblemsPage() {
                         setSelectedStatus('ALL');
                         setSelectedTopic('ALL');
                       }}
-                      className="flex items-center space-x-1 text-sm text-neutral-500 hover:text-[#262626] dark:hover:text-[#EFF1F6] cursor-pointer"
+                      className="icon-btn w-auto px-2"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X size={14} />
                       <span>Reset</span>
                     </button>
                   )}
@@ -261,62 +248,54 @@ export default function ProblemsPage() {
                   <button
                     type="button"
                     onClick={pickRandom}
-                    className="ml-auto flex items-center space-x-1.5 rounded-lg bg-[#F0F0F0] dark:bg-[#333333] px-3 py-1.5 text-sm text-neutral-700 dark:text-neutral-200 hover:bg-[#E6E6E6] dark:hover:bg-[#3E3E3E] cursor-pointer transition-colors"
+                    className="btn btn-sm btn-ghost ms-auto d-inline-flex align-items-center gap-2"
                   >
-                    <Shuffle className="h-4 w-4" />
+                    <Shuffle size={16} />
                     <span>Pick One</span>
                   </button>
                 </div>
 
-                <div className="px-3 pb-1 text-sm text-neutral-500 dark:text-neutral-400">
-                  <span className="text-[#2CBB5D] font-medium">{completedSlugs.size}</span>
+                <div className="px-3 pb-1 text-body-secondary">
+                  <span className="text-success fw-medium">{completedSlugs.size}</span>
                   <span> / {allProblems.length} Solved</span>
                 </div>
 
-                <table className="w-full text-left mt-1">
+                <table className="table table-striped table-hover align-middle mt-1 mb-0">
                   <thead>
-                    <tr className="text-xs text-neutral-500 dark:text-neutral-400 border-b border-[#E6E6E6] dark:border-[#3E3E3E]">
-                      <th className="px-4 py-2 w-14 font-normal">Status</th>
-                      <th className="px-2 py-2 font-normal">Title</th>
-                      <th className="px-2 py-2 w-44 font-normal hidden md:table-cell">Topic</th>
-                      <th className="px-4 py-2 w-28 font-normal text-right">Difficulty</th>
+                    <tr className="fs-xs">
+                      <th className="ps-3 text-body-secondary" style={{ width: 56 }}>Status</th>
+                      <th className="text-body-secondary">Title</th>
+                      <th className="text-body-secondary d-none d-md-table-cell" style={{ width: 176 }}>Topic</th>
+                      <th className="pe-3 text-body-secondary text-end" style={{ width: 112 }}>Difficulty</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pageItems.map((p) => {
                       const solved = completedSlugs.has(p.slug);
                       return (
-                        <tr
-                          key={p.slug || p.id}
-                          className="odd:bg-[#F7F8FA] dark:odd:bg-[#333333]/60 hover:bg-[#EFEFEF] dark:hover:bg-[#3E3E3E] transition-colors"
-                        >
-                          <td className="px-4 py-3">
+                        <tr key={p.slug || p.id}>
+                          <td className="ps-3">
                             <button
                               type="button"
                               onClick={() => toggleComplete(p.slug)}
-                              className="cursor-pointer"
+                              className="d-inline-flex border-0 bg-transparent p-0 cursor-pointer"
                               title={solved ? 'Solved' : 'Mark as solved'}
                             >
                               {solved ? (
-                                <CheckCircle2 className="h-[18px] w-[18px] text-[#2CBB5D]" />
+                                <CheckCircle2 size={18} className="text-success" />
                               ) : (
-                                <span className="block h-[18px] w-[18px]" />
+                                <span className="d-block" style={{ width: 18, height: 18 }} />
                               )}
                             </button>
                           </td>
-                          <td className="px-2 py-3 text-sm">
-                            <Link
-                              to={`/problems/${p.slug}`}
-                              className="text-[#262626] dark:text-[#EFF1F6] hover:text-[#FFA116] dark:hover:text-[#FFA116] transition-colors"
-                            >
-                              <span className="text-neutral-500 dark:text-neutral-400 mr-1">{indexOf(p)}.</span>
+                          <td>
+                            <Link to={`/problems/${p.slug}`} className="link-body-emphasis text-decoration-none">
+                              <span className="text-body-secondary me-1">{indexOf(p)}.</span>
                               {p.title}
                             </Link>
                           </td>
-                          <td className="px-2 py-3 text-sm text-neutral-500 dark:text-neutral-400 hidden md:table-cell">
-                            {p.category}
-                          </td>
-                          <td className="px-4 py-3 text-right">
+                          <td className="text-body-secondary d-none d-md-table-cell">{p.category}</td>
+                          <td className="pe-3 text-end">
                             <DifficultyBadge difficulty={p.difficulty} variant="text" />
                           </td>
                         </tr>
@@ -324,7 +303,7 @@ export default function ProblemsPage() {
                     })}
                     {pageItems.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-4 py-16 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                        <td colSpan={4} className="py-5 text-center text-body-secondary">
                           Không tìm thấy bài tập phù hợp.
                         </td>
                       </tr>
@@ -333,17 +312,14 @@ export default function ProblemsPage() {
                 </table>
 
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-center space-x-1 p-3 border-t border-[#E6E6E6] dark:border-[#3E3E3E]">
+                  <div className="d-flex align-items-center justify-content-center gap-1 p-3 border-top">
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                       <button
                         key={n}
                         type="button"
                         onClick={() => setPage(n)}
-                        className={`h-8 min-w-8 rounded-md px-2 text-sm cursor-pointer transition-colors ${
-                          n === page
-                            ? 'bg-[#262626] text-white dark:bg-[#EFF1F6] dark:text-[#262626]'
-                            : 'text-neutral-600 dark:text-neutral-300 hover:bg-[#F0F0F0] dark:hover:bg-[#333333]'
-                        }`}
+                        className={n === page ? 'btn btn-sm btn-contrast px-2' : 'icon-btn w-auto px-2'}
+                        style={{ minWidth: 32 }}
                       >
                         {n}
                       </button>
@@ -353,7 +329,7 @@ export default function ProblemsPage() {
               </div>
             </div>
 
-            <aside className="lg:sticky lg:top-[66px]">
+            <aside className="col-12 col-lg-4 col-xl-3 sticky-lg-top" style={{ top: 66 }}>
               <ProgressSidebar problems={allProblems} completedSlugs={completedSlugs} />
             </aside>
           </div>

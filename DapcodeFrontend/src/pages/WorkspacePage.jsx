@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Dropdown, Spinner } from 'react-bootstrap';
 import DifficultyBadge from '../components/DifficultyBadge';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import CodeEditor, { SUPPORTED_LANGUAGES } from '../components/CodeEditor';
@@ -14,14 +15,14 @@ import { submitCode, subscribeSubmissionStream } from '../api/submissions';
 import { getCurrentUser } from '../api/auth';
 import { getStarterCode } from '../data/starterTemplates';
 import { useTheme } from '../context/ThemeContext';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  FileText, 
-  History, 
-  Sparkles, 
-  Clock, 
-  Cpu, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  History,
+  Sparkles,
+  Clock,
+  Cpu,
   Search,
   Flame,
   User,
@@ -33,10 +34,9 @@ import {
   CloudUpload,
   Shuffle,
   Terminal,
-  Loader2,
   ChevronUp,
   LogOut,
-  Shield
+  Shield,
 } from 'lucide-react';
 
 export default function WorkspacePage() {
@@ -62,7 +62,6 @@ export default function WorkspacePage() {
   const [isStreakOpen, setIsStreakOpen] = useState(false);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [consoleTab, setConsoleTab] = useState('testcases');
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // User state
   const [user, setUser] = useState(() => {
@@ -400,10 +399,10 @@ export default function WorkspacePage() {
 
   if (isLoadingProblem) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#FFFFFF] dark:bg-[#1A1A1A] text-neutral-600 dark:text-neutral-400 font-sans">
-        <div className="flex flex-col items-center space-y-3">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-800 dark:border-neutral-200 border-t-transparent" />
-          <p className="text-xs">Đang tải đề bài từ Database...</p>
+      <div className="d-flex vh-100 align-items-center justify-content-center text-body-secondary">
+        <div className="d-flex flex-column align-items-center gap-3">
+          <Spinner animation="border" size="sm" />
+          <p className="fs-xs mb-0">Đang tải đề bài từ Database...</p>
         </div>
       </div>
     );
@@ -411,14 +410,13 @@ export default function WorkspacePage() {
 
   if (fetchError || !problem) {
     return (
-      <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#FFFFFF] dark:bg-[#1A1A1A] text-neutral-800 dark:text-neutral-200 font-sans p-4 space-y-4">
-        <AlertCircle className="h-8 w-8 text-[#EF4743]" />
-        <h2 className="text-base font-semibold text-[#262626] dark:text-[#EFF1F6]">Không thể tải bài tập</h2>
-        <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-md text-center">{fetchError || 'Bài tập không tồn tại trong hệ thống.'}</p>
-        <Link
-          to="/roadmap"
-          className="rounded-lg bg-[#262626] dark:bg-[#EFF1F6] px-4 py-2 text-xs font-medium text-[#F7F8FA] dark:text-[#262626] transition-colors"
-        >
+      <div className="d-flex flex-column vh-100 align-items-center justify-content-center gap-3 p-3">
+        <AlertCircle size={32} className="text-danger" />
+        <h2 className="fs-base fw-semibold text-body-emphasis mb-0">Không thể tải bài tập</h2>
+        <p className="fs-xs text-body-secondary text-center mb-0" style={{ maxWidth: 448 }}>
+          {fetchError || 'Bài tập không tồn tại trong hệ thống.'}
+        </p>
+        <Link to="/roadmap" className="btn btn-sm btn-contrast fs-xs">
           Quay lại Roadmap
         </Link>
       </div>
@@ -442,89 +440,88 @@ export default function WorkspacePage() {
     localStorage.removeItem('dapcode_token');
     localStorage.removeItem('dapcode_completed');
     setUser(null);
-    setIsUserMenuOpen(false);
     window.dispatchEvent(new Event('dapcode-auth-change'));
   };
 
+  const displayName = user?.username || user?.name || user?.email?.split('@')[0] || 'User';
+  const initialLetter = displayName.charAt(0).toUpperCase();
+
   return (
-    <div className="flex h-screen flex-col bg-[#F0F0F0] dark:bg-[#1A1A1A] text-[#262626] dark:text-[#EFF1F6] overflow-hidden">
-      <header className="relative flex h-[48px] items-center justify-between border-b border-[#E6E6E6] dark:border-[#3E3E3E] bg-white dark:bg-[#282828] px-3 flex-shrink-0">
+    <div className="d-flex flex-column vh-100 bg-canvas overflow-hidden">
+      <header className="app-header d-flex align-items-center justify-content-between border-bottom bg-surface px-3 flex-shrink-0">
         {/* Left Navigation Group */}
-        <div className="flex items-center space-x-1 min-w-0">
-          <Link to="/roadmap" className="flex items-center pr-1.5" title="LiệtCode Roadmap">
+        <div className="d-flex align-items-center gap-1 min-w-0">
+          <Link to="/roadmap" className="d-flex align-items-center pe-2 text-decoration-none" title="LiệtCode Roadmap">
             <DapcodeLogo size="sm" />
           </Link>
 
-          <div className="h-4 w-px bg-[#E6E6E6] dark:bg-[#3E3E3E]" />
+          <div className="vr my-2 opacity-25" />
 
-          <Link
-            to="/practice"
-            className="flex items-center space-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-neutral-700 dark:text-neutral-200 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors"
-          >
-            <List className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-            <span className="hidden sm:inline">Problem List</span>
+          <Link to="/practice" className="icon-btn w-auto px-2 fs-xs fw-medium text-decoration-none">
+            <List size={16} />
+            <span className="d-none d-sm-inline">Problem List</span>
           </Link>
 
-          <div className="flex items-center">
+          <div className="d-flex align-items-center">
             <button
               type="button"
               disabled={!prevProblem}
               onClick={() => prevProblem && navigate(`/problems/${prevProblem.slug}`)}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] hover:text-[#262626] dark:hover:text-[#EFF1F6] disabled:opacity-30 transition-colors cursor-pointer"
+              className="icon-btn"
               title={prevProblem ? `Bài trước: ${prevProblem.title}` : 'Không có bài trước'}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft size={16} />
             </button>
             <button
               type="button"
               disabled={!nextProblem}
               onClick={() => nextProblem && navigate(`/problems/${nextProblem.slug}`)}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] hover:text-[#262626] dark:hover:text-[#EFF1F6] disabled:opacity-30 transition-colors cursor-pointer"
+              className="icon-btn"
               title={nextProblem ? `Bài tiếp: ${nextProblem.title}` : 'Không có bài tiếp'}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight size={16} />
             </button>
             <button
               type="button"
               onClick={handlePickRandom}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] hover:text-[#262626] dark:hover:text-[#EFF1F6] transition-colors cursor-pointer"
+              className="icon-btn"
               title="Chọn bài ngẫu nhiên"
             >
-              <Shuffle className="h-3.5 w-3.5" />
+              <Shuffle size={14} />
             </button>
           </div>
         </div>
 
         {/* Center Action Group: Run | Submit | Testcase Toggle | AI Sparkles */}
-        <div className="flex items-center space-x-1.5">
-          <div className="flex items-center rounded-lg bg-[#F0F0F0] dark:bg-[#333333] p-0.5">
+        <div className="d-flex align-items-center gap-2">
+          <div className="d-inline-flex align-items-center rounded-2 bg-body-secondary p-1">
             <button
               type="button"
               disabled={isBusy}
               onClick={handleRunCode}
               title="Chạy thử code (Run)"
-              className="flex h-7 items-center justify-center rounded-l-md px-2.5 text-neutral-600 dark:text-neutral-300 hover:bg-[#E2E2E2] dark:hover:bg-[#404040] disabled:opacity-50 transition-colors cursor-pointer"
+              className="btn btn-sm btn-ghost border-0 d-inline-flex align-items-center justify-content-center px-2 py-1"
             >
               {submissionState.isRunning ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-neutral-500" />
+                <Spinner animation="border" size="sm" className="text-body-secondary" />
               ) : (
-                <Play className="h-3.5 w-3.5 fill-current" />
+                <Play size={14} fill="currentColor" />
               )}
             </button>
 
-            <div className="h-4 w-px bg-[#DCDCDC] dark:bg-[#454545]" />
+            <div className="vr opacity-25 my-1" />
 
             <button
               type="button"
               disabled={isBusy}
               onClick={handleSubmitCode}
               title="Nộp bài chấm điểm (Submit)"
-              className="flex h-7 items-center space-x-1.5 rounded-r-md px-3 text-xs font-semibold text-[#2CBB5D] hover:bg-[#E2E2E2] dark:hover:bg-[#404040] disabled:opacity-50 transition-colors cursor-pointer"
+              className="btn btn-sm btn-ghost border-0 d-inline-flex align-items-center gap-1 px-2 py-1 fs-xs fw-semibold text-success"
             >
               {submissionState.isSubmitting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2CBB5D]" />
+                <Spinner animation="border" size="sm" className="text-success" />
               ) : (
-                <CloudUpload className="h-4 w-4 text-[#2CBB5D]" />
+                <CloudUpload size={16} className="text-success" />
               )}
               <span>Submit</span>
             </button>
@@ -534,114 +531,93 @@ export default function WorkspacePage() {
             type="button"
             onClick={() => setIsConsoleOpen((v) => !v)}
             title={isConsoleOpen ? 'Ẩn bảng chấm Test Case' : 'Hiện bảng chấm Test Case'}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors cursor-pointer ${
-              isConsoleOpen
-                ? 'bg-[#262626] text-white dark:bg-[#EFF1F6] dark:text-[#262626]'
-                : 'bg-[#F0F0F0] dark:bg-[#333333] text-neutral-600 dark:text-neutral-300 hover:bg-[#E2E2E2] dark:hover:bg-[#404040]'
+            className={`btn btn-sm d-inline-flex align-items-center justify-content-center p-0 rounded-2 ${
+              isConsoleOpen ? 'btn-contrast' : 'btn-ghost'
             }`}
+            style={{ width: 32, height: 32 }}
           >
-            <Terminal className="h-4 w-4" />
+            <Terminal size={16} />
           </button>
 
           <button
             type="button"
             onClick={handleOpenAiTutor}
             title="Trợ lý AI Tutor"
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F0F0F0] dark:bg-[#333333] text-[#7C3AED] dark:text-[#A78BFA] hover:bg-[#EDE9FE] dark:hover:bg-[#404040] transition-colors cursor-pointer"
+            className="btn btn-sm btn-soft-primary d-inline-flex align-items-center justify-content-center p-0 rounded-2"
+            style={{ width: 32, height: 32 }}
           >
-            <Sparkles className="h-4 w-4" />
+            <Sparkles size={16} />
           </button>
         </div>
 
         {/* Right Utility Group: Search, Theme, Streak, User Avatar */}
-        <div className="flex items-center space-x-1">
+        <div className="d-flex align-items-center gap-1">
           <button
             type="button"
             onClick={() => setIsSearchOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 dark:text-neutral-400 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
+            className="icon-btn"
             title="Tìm kiếm bài tập (Ctrl+K)"
           >
-            <Search className="h-4 w-4" />
+            <Search size={16} />
           </button>
 
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 dark:text-neutral-400 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
+            className="icon-btn"
             title={isDark ? 'Chế độ sáng' : 'Chế độ tối'}
           >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
           <button
             type="button"
             onClick={() => setIsStreakOpen(true)}
-            className="flex h-8 items-center space-x-1 rounded-md px-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
+            className="icon-btn w-auto px-2 fs-xs"
             title="Chuỗi ngày học liên tiếp (Streak)"
           >
-            <Flame className="h-4 w-4 text-[#FFA116]" />
-            <span className="font-medium">{user?.streakCount ?? user?.streak ?? 0}</span>
+            <Flame size={16} className="text-primary" />
+            <span className="fw-medium">{user?.streakCount ?? user?.streak ?? 0}</span>
           </button>
 
           {user ? (
-            <div className="relative ml-1">
-              <button
-                type="button"
-                onClick={() => setIsUserMenuOpen((v) => !v)}
-                className="flex h-7 w-7 items-center justify-center rounded-full overflow-hidden bg-[#FFA116] text-white text-xs font-semibold cursor-pointer"
-              >
+            <Dropdown align="end" className="ms-1">
+              <Dropdown.Toggle as="button" bsPrefix="avatar avatar-sm cursor-pointer" title={displayName}>
                 {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.username || 'User'}
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={user.avatarUrl} alt={displayName} referrerPolicy="no-referrer" />
                 ) : (
-                  (user.username || user.name || user.email || 'U').charAt(0).toUpperCase()
+                  initialLetter
                 )}
-              </button>
+              </Dropdown.Toggle>
 
-              {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-lg border border-[#E6E6E6] dark:border-[#3E3E3E] bg-white dark:bg-[#282828] shadow-lg py-1 z-50">
-                  <div className="px-3.5 py-2.5 border-b border-[#E6E6E6] dark:border-[#3E3E3E]">
-                    <div className="text-xs font-semibold text-[#262626] dark:text-[#EFF1F6] truncate">
-                      {user.username || user.name || 'User'}
-                    </div>
-                    <div className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">{user.email}</div>
-                  </div>
-                  <div className="flex items-center justify-between px-3.5 py-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    <span>XP</span>
-                    <span className="font-medium text-[#262626] dark:text-[#EFF1F6]">{user.xp ?? 0}</span>
-                  </div>
-                  {user.role === 'ROLE_ADMIN' && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex w-full items-center space-x-2 px-3.5 py-2 text-xs text-[#FFA116] hover:bg-[#FFA116]/10 font-medium"
-                    >
-                      <Shield className="h-3.5 w-3.5" />
-                      <span>Trang Quản trị (Admin)</span>
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="flex w-full items-center space-x-2 px-3.5 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-[#F7F8FA] dark:hover:bg-[#333333] cursor-pointer"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span>Đăng xuất</span>
-                  </button>
+              <Dropdown.Menu className="shadow py-1">
+                <div className="px-3 py-2 border-bottom">
+                  <div className="fs-xs fw-semibold text-body-emphasis text-truncate">{displayName}</div>
+                  <div className="fs-2xs text-body-secondary text-truncate">{user.email}</div>
                 </div>
-              )}
-            </div>
+                <div className="d-flex align-items-center justify-content-between px-3 py-2 fs-xs text-body-secondary">
+                  <span>XP</span>
+                  <span className="fw-medium text-body-emphasis">{user.xp ?? 0}</span>
+                </div>
+                {user.role === 'ROLE_ADMIN' && (
+                  <Dropdown.Item as={Link} to="/admin" className="d-flex align-items-center gap-2 fs-xs text-primary fw-medium">
+                    <Shield size={14} />
+                    <span>Trang Quản trị (Admin)</span>
+                  </Dropdown.Item>
+                )}
+                <Dropdown.Item as="button" onClick={handleLogout} className="d-flex align-items-center gap-2 fs-xs text-body-secondary">
+                  <LogOut size={14} />
+                  <span>Đăng xuất</span>
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
           ) : (
             <button
               type="button"
               onClick={() => setIsAuthOpen(true)}
-              className="ml-1 flex h-7 items-center space-x-1 rounded-md px-2.5 text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
+              className="icon-btn w-auto px-2 ms-1 fs-xs fw-medium"
             >
-              <User className="h-3.5 w-3.5" />
+              <User size={14} />
               <span>Sign In</span>
             </button>
           )}
@@ -649,132 +625,136 @@ export default function WorkspacePage() {
       </header>
 
       {/* Main Split-Pane Workspace */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 p-2 overflow-hidden">
-        <div className="lg:col-span-5 flex flex-col rounded-lg bg-[#FFFFFF] dark:bg-[#282828] overflow-hidden h-full">
-          <div className="flex h-10 items-center border-b border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333] px-2 space-x-1">
-            <button
-              type="button"
-              onClick={() => setActiveLeftTab('description')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm transition-colors cursor-pointer ${
-                activeLeftTab === 'description'
-                  ? 'text-[#262626] dark:text-[#EFF1F6] font-medium bg-white dark:bg-[#282828]'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'
-              }`}
-            >
-              <FileText className="h-3.5 w-3.5" />
-              <span>Mô tả</span>
-            </button>
+      <div className="flex-grow-1 min-h-0 p-2 overflow-hidden">
+        <div className="row g-2 h-100">
+          <div className="col-12 col-lg-5 h-100">
+            <div className="bg-surface rounded-2 overflow-hidden d-flex flex-column h-100">
+              <div className="d-flex align-items-center bg-body-tertiary border-bottom px-2 flex-shrink-0" style={{ height: 40 }}>
+                <nav className="nav nav-pills nav-soft">
+                  <button
+                    type="button"
+                    onClick={() => setActiveLeftTab('description')}
+                    className={`nav-link ${activeLeftTab === 'description' ? 'active' : ''}`}
+                  >
+                    <FileText size={14} />
+                    <span>Mô tả</span>
+                  </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveLeftTab('submissions')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm transition-colors cursor-pointer ${
-                activeLeftTab === 'submissions'
-                  ? 'text-[#262626] dark:text-[#EFF1F6] font-medium bg-white dark:bg-[#282828]'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200'
-              }`}
-            >
-              <History className="h-3.5 w-3.5" />
-              <span>Lịch sử nộp</span>
-            </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveLeftTab('submissions')}
+                    className={`nav-link ${activeLeftTab === 'submissions' ? 'active' : ''}`}
+                  >
+                    <History size={14} />
+                    <span>Lịch sử nộp</span>
+                  </button>
+                </nav>
+              </div>
+
+              {/* Left Panel Content: Editorial Readable Style */}
+              <div className="flex-grow-1 overflow-y-auto p-4">
+                {activeLeftTab === 'description' ? (
+                  <div className="d-flex flex-column gap-3">
+                    <h1 className="fs-xl fw-semibold text-body-emphasis mb-0">
+                      {currentIndex >= 0 ? `${currentIndex + 1}. ` : ''}
+                      {problem.title}
+                    </h1>
+                    <div className="d-flex flex-wrap align-items-center gap-2 fs-xs text-body-secondary">
+                      <DifficultyBadge difficulty={problem.difficulty} />
+                      <span className="badge rounded-pill bg-body-secondary text-body-secondary px-3">
+                        {problem.category}
+                      </span>
+                      <div className="d-flex align-items-center gap-1">
+                        <Clock size={14} />
+                        <span>{problem.timeLimitMs || 1000} ms</span>
+                      </div>
+                      <div className="d-flex align-items-center gap-1">
+                        <Cpu size={14} />
+                        <span>{((problem.memoryLimitKb || 262144) / 1024).toFixed(0)} MB</span>
+                      </div>
+                    </div>
+
+                    {/* Markdown Description */}
+                    <MarkdownRenderer content={problem.descriptionMarkdown} />
+                  </div>
+                ) : (
+                  /* Submissions History */
+                  <div className="d-flex flex-column gap-3">
+                    <div className="fs-xs fw-medium text-body-secondary">Lịch sử bài nộp:</div>
+                    <div className="rounded-2 border bg-body-tertiary p-3 fs-xs text-body-secondary">
+                      Chưa có lượt nộp bài nào được ghi nhận cho bài toán này.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Left Panel Content: Editorial Readable Style */}
-          <div className="flex-1 overflow-y-auto p-5 text-sm">
-            {activeLeftTab === 'description' ? (
-              <div className="space-y-4">
-                <h1 className="text-xl font-semibold text-[#262626] dark:text-[#EFF1F6]">
-                  {currentIndex >= 0 ? `${currentIndex + 1}. ` : ''}
-                  {problem.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                  <DifficultyBadge difficulty={problem.difficulty} />
-                  <span className="rounded-full bg-[#F0F0F0] dark:bg-[#333333] px-3 py-1 font-medium text-neutral-600 dark:text-neutral-300">
-                    {problem.category}
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-3.5 w-3.5 text-neutral-400" />
-                    <span>{problem.timeLimitMs || 1000} ms</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Cpu className="h-3.5 w-3.5 text-neutral-400" />
-                    <span>{((problem.memoryLimitKb || 262144) / 1024).toFixed(0)} MB</span>
-                  </div>
-                </div>
+          {/* Right Pane: Monaco Editor + Collapsible Console Drawer (7 Cols on LG) */}
+          <div className="col-12 col-lg-7 h-100 d-flex flex-column gap-2 overflow-hidden">
+            <div
+              className="w-100 min-h-0"
+              style={isConsoleOpen ? { flex: '14 1 0' } : { flex: '1 1 0' }}
+            >
+              <CodeEditor
+                code={code}
+                onChange={setCode}
+                language={language}
+                onLanguageChange={handleLanguageChange}
+                onResetCode={handleResetCode}
+              />
+            </div>
 
-                {/* Markdown Description */}
-                <MarkdownRenderer content={problem.descriptionMarkdown} />
+            {isConsoleOpen ? (
+              <div className="w-100 min-h-0" style={{ flex: '11 1 0' }}>
+                <ConsoleDrawer
+                  publicTestCases={problem.publicTestCases || []}
+                  submissionState={submissionState}
+                  activeTab={consoleTab}
+                  onTabChange={setConsoleTab}
+                  onClose={() => setIsConsoleOpen(false)}
+                />
               </div>
             ) : (
-              /* Submissions History */
-              <div className="space-y-3">
-                <div className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">Lịch sử bài nộp:</div>
-                <div className="rounded-lg border border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#F7F8FA] dark:bg-[#333333] p-3 text-xs text-neutral-500 dark:text-neutral-400">
-                  Chưa có lượt nộp bài nào được ghi nhận cho bài toán này.
+              <div
+                className="d-flex align-items-center justify-content-between rounded-2 bg-surface px-3 border flex-shrink-0"
+                style={{ height: 36 }}
+              >
+                <div className="d-flex align-items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConsoleTab('testcases');
+                      setIsConsoleOpen(true);
+                    }}
+                    className="icon-btn w-auto px-2 fs-xs fw-medium"
+                  >
+                    <Terminal size={14} className="text-success" />
+                    <span>Test Cases</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConsoleTab('result');
+                      setIsConsoleOpen(true);
+                    }}
+                    className="icon-btn w-auto px-2 fs-xs fw-medium"
+                  >
+                    <span>Kết quả chấm</span>
+                    {isBusy && <Spinner animation="grow" className="text-success ms-1" style={{ width: 6, height: 6 }} />}
+                  </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIsConsoleOpen(true)}
+                  className="icon-btn w-auto px-2 fs-xs"
+                >
+                  <span>Mở bảng</span>
+                  <ChevronUp size={14} />
+                </button>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Right Pane: Monaco Editor + Collapsible Console Drawer (7 Cols on LG) */}
-        <div className="lg:col-span-7 flex flex-col h-full space-y-2 overflow-hidden">
-          <div className={isConsoleOpen ? 'h-[56%] w-full min-h-0' : 'flex-1 w-full min-h-0'}>
-            <CodeEditor
-              code={code}
-              onChange={setCode}
-              language={language}
-              onLanguageChange={handleLanguageChange}
-              onResetCode={handleResetCode}
-            />
-          </div>
-
-          {isConsoleOpen ? (
-            <div className="h-[44%] w-full min-h-0 animate-in slide-in-from-bottom-2 duration-150">
-              <ConsoleDrawer
-                publicTestCases={problem.publicTestCases || []}
-                submissionState={submissionState}
-                activeTab={consoleTab}
-                onTabChange={setConsoleTab}
-                onClose={() => setIsConsoleOpen(false)}
-              />
-            </div>
-          ) : (
-            <div className="flex h-9 items-center justify-between rounded-lg bg-[#FFFFFF] dark:bg-[#282828] px-3 border border-[#E6E6E6] dark:border-[#3E3E3E] flex-shrink-0">
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConsoleTab('testcases');
-                    setIsConsoleOpen(true);
-                  }}
-                  className="flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
-                >
-                  <Terminal className="h-3.5 w-3.5 text-[#2CBB5D]" />
-                  <span>Test Cases</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConsoleTab('result');
-                    setIsConsoleOpen(true);
-                  }}
-                  className="flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
-                >
-                  <span>Kết quả chấm</span>
-                  {isBusy && <span className="h-1.5 w-1.5 rounded-full bg-[#2CBB5D] animate-pulse" />}
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsConsoleOpen(true)}
-                className="flex items-center space-x-1 text-xs text-neutral-500 hover:text-[#262626] dark:hover:text-[#EFF1F6] cursor-pointer"
-              >
-                <span>Mở bảng</span>
-                <ChevronUp className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -798,7 +778,10 @@ export default function WorkspacePage() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLoginSuccess={(u) => setUser(u)}
+        onLoginSuccess={(u) => {
+          setUser(u);
+          window.dispatchEvent(new Event('dapcode-auth-change'));
+        }}
         promptMessage={authPromptMessage}
       />
       <StreakModal

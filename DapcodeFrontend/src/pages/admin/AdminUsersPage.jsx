@@ -13,10 +13,14 @@ import {
   useToast,
   useDebounced,
   inputCls,
+  selectCls,
   btnPrimary,
   btnGhost,
+  btnDanger,
   iconBtn,
 } from '../../components/admin/AdminUi';
+
+const thCls = 'fw-medium text-body-secondary';
 
 function StatusDialog({ open, user, onClose, onSaved }) {
   const toast = useToast();
@@ -52,20 +56,20 @@ function StatusDialog({ open, user, onClose, onSaved }) {
       open={open}
       onClose={onClose}
       title={isBanning ? 'Khóa tài khoản học viên' : 'Mở khóa tài khoản học viên'}
-      maxWidth="max-w-md"
+      size="sm"
     >
-      <div className="space-y-4">
-        <p className="text-sm text-neutral-600 dark:text-neutral-300">
+      <div className="d-flex flex-column gap-3">
+        <p className="mb-0 text-body-secondary">
           Bạn đang {isBanning ? 'khóa' : 'mở khóa'} tài khoản:{' '}
-          <strong className="text-[#262626] dark:text-[#EFF1F6]">
+          <strong className="text-body-emphasis">
             {user.username} ({user.email})
           </strong>
         </p>
 
         {isBanning && (
           <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-600 dark:text-neutral-300">
-              Lý do khóa tài khoản <span className="text-[#EF4743]">*</span>
+            <label className="form-label d-block">
+              Lý do khóa tài khoản <span className="text-danger">*</span>
             </label>
             <textarea
               value={bannedReason}
@@ -77,14 +81,14 @@ function StatusDialog({ open, user, onClose, onSaved }) {
           </div>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-[#E6E6E6] pt-3 dark:border-[#3E3E3E]">
+        <div className="d-flex justify-content-end gap-2 border-top pt-3">
           <button type="button" onClick={onClose} className={btnGhost} disabled={saving}>
             Hủy
           </button>
           <button
             type="button"
             onClick={handleSubmit}
-            className={`${btnPrimary} ${isBanning ? '!bg-[#EF4743] hover:!bg-[#D93834]' : ''}`}
+            className={isBanning ? btnDanger : btnPrimary}
             disabled={saving}
           >
             {saving ? 'Đang xử lý...' : isBanning ? 'Khóa tài khoản' : 'Mở khóa'}
@@ -154,17 +158,17 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div>
       <PageHeader
         title="Quản lý học viên & tài khoản"
-        description="Tra cứu tài khoản, phân quyền quản trị viên và xử lý vi phạm học viên."
+        subtitle="Tra cứu tài khoản, phân quyền quản trị viên và xử lý vi phạm học viên."
       />
 
-      <Card className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <div className="relative min-w-[240px] flex-1">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+      <Card className="p-3 mb-4">
+        <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div className="d-flex flex-grow-1 flex-wrap align-items-center gap-2">
+            <div className="position-relative flex-grow-1" style={{ minWidth: 240 }}>
+              <Search size={16} className="position-absolute top-50 translate-middle-y text-body-secondary" style={{ left: 12 }} />
               <input
                 type="text"
                 value={search}
@@ -173,7 +177,7 @@ export default function AdminUsersPage() {
                   setPage(0);
                 }}
                 placeholder="Tìm theo username hoặc email..."
-                className={`${inputCls} pl-9`}
+                className={`${inputCls} ps-5`}
               />
             </div>
             <select
@@ -182,7 +186,7 @@ export default function AdminUsersPage() {
                 setRoleFilter(e.target.value);
                 setPage(0);
               }}
-              className="h-9 rounded-lg border border-[#E6E6E6] bg-white px-3 text-sm text-[#262626] dark:border-[#3E3E3E] dark:bg-[#282828] dark:text-[#EFF1F6]"
+              className={`${selectCls} w-auto`}
             >
               <option value="ALL">Tất cả vai trò</option>
               <option value="ROLE_USER">Học viên (User)</option>
@@ -194,103 +198,98 @@ export default function AdminUsersPage() {
                 setStatusFilter(e.target.value);
                 setPage(0);
               }}
-              className="h-9 rounded-lg border border-[#E6E6E6] bg-white px-3 text-sm text-[#262626] dark:border-[#3E3E3E] dark:bg-[#282828] dark:text-[#EFF1F6]"
+              className={`${selectCls} w-auto`}
             >
               <option value="ALL">Tất cả trạng thái</option>
               <option value="ACTIVE">Đang hoạt động</option>
               <option value="BANNED">Đã bị khóa</option>
             </select>
           </div>
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">
-            Tổng cộng: <strong className="text-[#262626] dark:text-[#EFF1F6]">{totalElements}</strong> tài khoản
+          <span className="fs-xs text-body-secondary">
+            Tổng cộng: <strong className="text-body-emphasis">{totalElements}</strong> tài khoản
           </span>
         </div>
       </Card>
 
       <Card className="overflow-hidden">
         {loading ? (
-          <div className="py-16 text-center">
+          <div className="py-5 text-center">
             <Spinner />
           </div>
         ) : users.length === 0 ? (
-          <div className="py-12">
-            <Empty title="Không tìm thấy tài khoản" description="Thử đổi từ khóa hoặc bộ lọc tìm kiếm." />
+          <div className="py-5">
+            <Empty>
+              <div className="fw-medium text-body-emphasis">Không tìm thấy tài khoản</div>
+              <div className="fs-xs">Thử đổi từ khóa hoặc bộ lọc tìm kiếm.</div>
+            </Empty>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-[#E6E6E6] bg-[#F7F8FA] text-xs font-medium text-neutral-500 dark:border-[#3E3E3E] dark:bg-[#202020] dark:text-neutral-400">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="bg-body-tertiary fs-xs">
                 <tr>
-                  <th className="px-4 py-3">Học viên</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Vai trò</th>
-                  <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3">Ngày tham gia</th>
-                  <th className="px-4 py-3 text-right">Hành động</th>
+                  <th className={`ps-3 ${thCls}`}>Học viên</th>
+                  <th className={thCls}>Email</th>
+                  <th className={thCls}>Vai trò</th>
+                  <th className={thCls}>Trạng thái</th>
+                  <th className={thCls}>Ngày tham gia</th>
+                  <th className={`pe-3 text-end ${thCls}`}>Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E6E6E6] dark:divide-[#3E3E3E]">
+              <tbody>
                 {users.map((u) => {
                   const isAdmin = u.role === 'ROLE_ADMIN';
                   return (
-                    <tr
-                      key={u.id}
-                      className="hover:bg-[#F7F8FA] dark:hover:bg-[#303030]/50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#FFA116] text-xs font-semibold text-white">
+                    <tr key={u.id}>
+                      <td className="ps-3">
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="avatar fs-xs">
                             {u.avatarUrl ? (
-                              <img
-                                src={u.avatarUrl}
-                                alt={u.username}
-                                referrerPolicy="no-referrer"
-                                className="h-full w-full object-cover"
-                              />
+                              <img src={u.avatarUrl} alt={u.username} referrerPolicy="no-referrer" />
                             ) : (
                               (u.username || 'U').charAt(0).toUpperCase()
                             )}
                           </div>
                           <div>
-                            <div className="font-medium text-[#262626] dark:text-[#EFF1F6]">{u.username}</div>
+                            <div className="fw-medium text-body-emphasis">{u.username}</div>
                             {u.bannedReason && (
-                              <div className="flex items-center gap-1 text-[11px] text-[#EF4743]">
-                                <AlertTriangle className="h-3 w-3" />
+                              <div className="d-flex align-items-center gap-1 fs-2xs text-danger">
+                                <AlertTriangle size={12} />
                                 <span>{u.bannedReason}</span>
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-neutral-500 dark:text-neutral-400">{u.email}</td>
-                      <td className="px-4 py-3">
+                      <td className="fs-xs text-body-secondary">{u.email}</td>
+                      <td>
                         {isAdmin ? (
                           <Badge tone="orange">
-                            <Shield className="mr-1 h-3 w-3" /> ADMIN
+                            <Shield size={12} className="me-1 align-text-bottom" /> ADMIN
                           </Badge>
                         ) : (
-                          <Badge tone="gray">USER</Badge>
+                          <Badge tone="neutral">USER</Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         {u.active ? (
                           <Badge tone="green">Hoạt động</Badge>
                         ) : (
                           <Badge tone="red">Bị khóa</Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-neutral-400">
+                      <td className="fs-xs text-body-secondary">
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '—'}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      <td className="pe-3 text-end">
+                        <div className="d-flex align-items-center justify-content-end gap-1">
                           <button
                             type="button"
                             onClick={() => setRoleChangeUser(u)}
                             className={iconBtn}
                             title={isAdmin ? 'Hạ quyền về User' : 'Nâng cấp quyền Admin'}
                           >
-                            {isAdmin ? <ShieldAlert className="h-4 w-4 text-[#FFA116]" /> : <Shield className="h-4 w-4" />}
+                            {isAdmin ? <ShieldAlert size={16} className="text-primary" /> : <Shield size={16} />}
                           </button>
                           <button
                             type="button"
@@ -298,14 +297,10 @@ export default function AdminUsersPage() {
                               setSelectedUser(u);
                               setStatusOpen(true);
                             }}
-                            className={`${iconBtn} ${
-                              u.active
-                                ? 'hover:text-[#EF4743] dark:hover:text-[#EF4743]'
-                                : 'hover:text-[#2CBB5D] dark:hover:text-[#2CBB5D]'
-                            }`}
+                            className={`${iconBtn} ${u.active ? 'icon-btn-danger' : 'icon-btn-success'}`}
                             title={u.active ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
                           >
-                            {u.active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                            {u.active ? <UserX size={16} /> : <UserCheck size={16} />}
                           </button>
                         </div>
                       </td>
@@ -317,9 +312,7 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        <div className="p-3">
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-        </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </Card>
 
       <StatusDialog
@@ -335,11 +328,11 @@ export default function AdminUsersPage() {
       <ConfirmDialog
         open={Boolean(roleChangeUser)}
         title="Thay đổi vai trò người dùng"
-        description={`Bạn có chắc muốn đổi vai trò của "${roleChangeUser?.username}" từ ${
+        message={`Bạn có chắc muốn đổi vai trò của "${roleChangeUser?.username}" từ ${
           roleChangeUser?.role === 'ROLE_ADMIN' ? 'ADMIN sang USER' : 'USER sang ADMIN'
         }?`}
         confirmLabel="Đổi vai trò"
-        loading={roleChanging}
+        busy={roleChanging}
         onConfirm={handleRoleToggle}
         onClose={() => setRoleChangeUser(null)}
       />

@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Spinner } from 'react-bootstrap';
 import ProblemsPage from './pages/ProblemsPage';
 import AdminRoute from './components/AdminRoute';
 import BannedModal from './components/BannedModal';
@@ -24,8 +25,9 @@ function App() {
         <BannedModal />
         <Suspense
           fallback={
-            <div className="flex h-screen w-screen items-center justify-center bg-[#F0F0F0] dark:bg-[#1A1A1A] text-xs text-neutral-500 dark:text-neutral-400">
-              Đang tải trang...
+            <div className="d-flex vh-100 vw-100 align-items-center justify-content-center gap-2 bg-canvas fs-xs text-body-secondary">
+              <Spinner animation="border" size="sm" />
+              <span>Đang tải trang...</span>
             </div>
           }
         >
@@ -65,4 +67,3 @@ function App() {
 }
 
 export default App;
-

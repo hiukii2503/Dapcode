@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Dropdown } from 'react-bootstrap';
 import { Search, Flame, Sun, Moon, LogOut, User, Shield } from 'lucide-react';
 import SearchModal from './SearchModal';
 import AuthModal from './AuthModal';
@@ -21,11 +22,14 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isStreakOpen, setIsStreakOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef(null);
 
   const [user, setUser] = useState(() => {
     try {
+      const token = localStorage.getItem('dapcode_token');
+      if (!token) {
+        localStorage.removeItem('dapcode_user');
+        return null;
+      }
       return JSON.parse(localStorage.getItem('dapcode_user') || 'null');
     } catch {
       return null;
@@ -41,14 +45,6 @@ export default function Navbar() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setIsMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
   useEffect(() => {
@@ -73,15 +69,8 @@ export default function Navbar() {
 
   useEffect(() => {
     const token = localStorage.getItem('dapcode_token');
-    if (!token) {
-      if (user) {
-        localStorage.removeItem('dapcode_user');
-        setUser(null);
-      }
-      return;
-    }
+    if (!token) return;
 
-    // Luôn kiểm tra token với Backend khi mở trang để đồng bộ XP/Streak mới nhất hoặc tự đăng xuất nếu token hết hạn
     getCurrentUser()
       .then((res) => {
         let userData = res?.data || res;
@@ -95,7 +84,7 @@ export default function Navbar() {
         }
       })
       .catch(() => {
-        // Nếu 401 thì interceptor trong client.js đã tự xóa token & user và phát sự kiện dapcode-auth-change
+        // 401 handled in client.js interceptor
       });
   }, []);
 
@@ -104,7 +93,6 @@ export default function Navbar() {
     localStorage.removeItem('dapcode_token');
     localStorage.removeItem('dapcode_completed');
     setUser(null);
-    setIsMenuOpen(false);
     window.dispatchEvent(new Event('dapcode-auth-change'));
   };
 
@@ -112,34 +100,21 @@ export default function Navbar() {
   const displayStreak = user?.streakCount ?? user?.streak ?? 0;
   const initialLetter = displayName.charAt(0).toUpperCase();
 
-  const iconBtn =
-    'flex h-8 w-8 items-center justify-center rounded-md text-neutral-500 dark:text-neutral-400 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] hover:text-[#262626] dark:hover:text-[#EFF1F6] transition-colors cursor-pointer';
-
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-[#E6E6E6] dark:border-[#3E3E3E] bg-white dark:bg-[#282828]">
-        <div className="mx-auto flex h-[50px] max-w-[1300px] items-center justify-between px-4">
-          <div className="flex items-center space-x-6">
-            <Link to="/roadmap" className="flex items-center space-x-2">
+      <header className="app-header sticky-top w-100 border-bottom bg-surface">
+        <div className="app-container mx-auto h-100 d-flex align-items-center justify-content-between px-3">
+          <div className="d-flex align-items-center gap-4">
+            <Link to="/roadmap" className="d-flex align-items-center gap-2 text-decoration-none">
               <DapcodeLogo size="sm" />
-              <span className="text-base font-bold tracking-tight text-[#262626] dark:text-[#EFF1F6] hidden sm:inline">
-                LiệtCode
-              </span>
+              <span className="fs-base fw-bold text-body-emphasis d-none d-sm-inline">LiệtCode</span>
             </Link>
 
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="app-nav nav d-none d-md-flex">
               {NAV_LINKS.map((item) => {
                 const isActive = location.pathname === item.path || location.pathname === item.alt;
                 return (
-                  <Link
-                    key={item.label}
-                    to={item.path}
-                    className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                      isActive
-                        ? 'text-[#262626] dark:text-[#EFF1F6] font-medium'
-                        : 'text-neutral-500 dark:text-neutral-400 hover:text-[#262626] dark:hover:text-[#EFF1F6]'
-                    }`}
-                  >
+                  <Link key={item.label} to={item.path} className={`nav-link ${isActive ? 'active' : ''}`}>
                     {item.label}
                   </Link>
                 );
@@ -147,82 +122,50 @@ export default function Navbar() {
             </nav>
           </div>
 
-          <div className="flex items-center space-x-1">
-            <button type="button" onClick={() => setIsSearchOpen(true)} className={iconBtn} title="Tìm kiếm (Ctrl+K)">
-              <Search className="h-[18px] w-[18px]" />
+          <div className="d-flex align-items-center gap-1">
+            <button type="button" onClick={() => setIsSearchOpen(true)} className="icon-btn" title="Tìm kiếm (Ctrl+K)">
+              <Search size={18} />
             </button>
 
-            <button
-              type="button"
-              onClick={() => setIsStreakOpen(true)}
-              className="flex h-8 items-center space-x-1 rounded-md px-2 text-sm text-neutral-600 dark:text-neutral-300 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
-              title="Chuỗi streak"
-            >
-              <Flame className="h-[18px] w-[18px] text-[#FFA116]" />
-              <span className="font-medium">{displayStreak}</span>
+            <button type="button" onClick={() => setIsStreakOpen(true)} className="icon-btn w-auto px-2" title="Chuỗi streak">
+              <Flame size={18} className="text-primary" />
+              <span className="fw-medium">{displayStreak}</span>
             </button>
 
-            <button type="button" onClick={toggleTheme} className={iconBtn} title={isDark ? 'Chế độ sáng' : 'Chế độ tối'}>
-              {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+            <button type="button" onClick={toggleTheme} className="icon-btn" title={isDark ? 'Chế độ sáng' : 'Chế độ tối'}>
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
             {user ? (
-              <div className="relative ml-2" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsMenuOpen((v) => !v)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full overflow-hidden bg-[#FFA116] text-white text-sm font-semibold cursor-pointer"
-                >
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={displayName}
-                      referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    initialLetter
-                  )}
-                </button>
+              <Dropdown align="end" className="ms-2">
+                <Dropdown.Toggle as="button" bsPrefix="avatar cursor-pointer" title={displayName}>
+                  {user.avatarUrl ? <img src={user.avatarUrl} alt={displayName} referrerPolicy="no-referrer" /> : initialLetter}
+                </Dropdown.Toggle>
 
-                {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-lg border border-[#E6E6E6] dark:border-[#3E3E3E] bg-white dark:bg-[#282828] shadow-lg py-1">
-                    <div className="px-4 py-3 border-b border-[#E6E6E6] dark:border-[#3E3E3E]">
-                      <div className="text-sm font-medium text-[#262626] dark:text-[#EFF1F6] truncate">{displayName}</div>
-                      <div className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{user.email}</div>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-2 text-xs text-neutral-500 dark:text-neutral-400">
-                      <span>XP</span>
-                      <span className="font-medium text-[#262626] dark:text-[#EFF1F6]">{user.xp ?? 0}</span>
-                    </div>
-                    {user.role === 'ROLE_ADMIN' && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-[#FFA116] hover:bg-[#FFA116]/10 cursor-pointer font-medium"
-                      >
-                        <Shield className="h-4 w-4" />
-                        <span>Trang Quản trị (Admin)</span>
-                      </Link>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-neutral-600 dark:text-neutral-300 hover:bg-[#F7F8FA] dark:hover:bg-[#333333] cursor-pointer"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Đăng xuất</span>
-                    </button>
+                <Dropdown.Menu className="shadow py-1">
+                  <div className="px-3 py-2 border-bottom">
+                    <div className="fw-medium text-body-emphasis text-truncate">{displayName}</div>
+                    <div className="fs-xs text-body-secondary text-truncate">{user.email}</div>
                   </div>
-                )}
-              </div>
+                  <div className="d-flex align-items-center justify-content-between px-3 py-2 fs-xs text-body-secondary">
+                    <span>XP</span>
+                    <span className="fw-medium text-body-emphasis">{user.xp ?? 0}</span>
+                  </div>
+                  {user.role === 'ROLE_ADMIN' && (
+                    <Dropdown.Item as={Link} to="/admin" className="d-flex align-items-center gap-2 text-primary fw-medium">
+                      <Shield size={16} />
+                      <span>Trang Quản trị (Admin)</span>
+                    </Dropdown.Item>
+                  )}
+                  <Dropdown.Item as="button" onClick={handleLogout} className="d-flex align-items-center gap-2 text-body-secondary">
+                    <LogOut size={16} />
+                    <span>Đăng xuất</span>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
             ) : (
-              <button
-                type="button"
-                onClick={() => setIsAuthOpen(true)}
-                className="ml-1 flex h-8 items-center space-x-1.5 rounded-md px-3 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-[#F0F0F0] dark:hover:bg-[#333333] transition-colors cursor-pointer"
-              >
-                <User className="h-4 w-4" />
+              <button type="button" onClick={() => setIsAuthOpen(true)} className="icon-btn w-auto px-3 ms-1 fw-medium">
+                <User size={16} />
                 <span>Sign In</span>
               </button>
             )}

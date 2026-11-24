@@ -1,0 +1,408 @@
+// LiệtCode theme on top of Bootstrap 5.3.
+// Bootstrap variables must be overridden BEFORE importing Bootstrap.
+
+// ---------------------------------------------------------------------------
+// Brand colors
+// ---------------------------------------------------------------------------
+$primary: #FFA116;
+$secondary: #595959;
+$success: #2CBB5D;
+$info: #3B82F6;
+$warning: #FFB800;
+$danger: #EF4743;
+$light: #F7F8FA;
+$dark: #262626;
+
+// Orange / green buttons use white text like the original design (contrast ~2:1)
+$min-contrast-ratio: 2;
+
+// ---------------------------------------------------------------------------
+// Light / dark palettes (toggled with data-bs-theme on <html>)
+// ---------------------------------------------------------------------------
+$body-bg: #FFFFFF;
+$body-color: #262626;
+$body-secondary-color: #8A8A8A;
+$body-secondary-bg: #F0F0F0;   // .bg-body-secondary -> fill (inputs, chips)
+$body-tertiary-bg: #F7F8FA;    // .bg-body-tertiary  -> subtle (toolbars, code blocks)
+$border-color: #E6E6E6;
+
+$body-bg-dark: #1A1A1A;
+$body-color-dark: #EFF1F6;
+$body-secondary-color-dark: #9A9A9A;
+$body-secondary-bg-dark: #333333;
+$body-tertiary-bg-dark: #333333;
+$border-color-dark: #3E3E3E;
+
+// ---------------------------------------------------------------------------
+// Typography (the UI is dense: base 14px like LeetCode)
+// ---------------------------------------------------------------------------
+$font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-family-monospace: "Fira Code", Menlo, Consolas, monospace;
+$font-size-base: .875rem;
+$font-size-sm: .75rem;
+$font-size-lg: 1rem;
+$headings-font-weight: 600;
+$h1-font-size: 1.25rem;
+$h2-font-size: 1.125rem;
+$h3-font-size: 1rem;
+$h4-font-size: .9375rem;
+$h5-font-size: .875rem;
+$h6-font-size: .8125rem;
+$link-decoration: none;
+
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
+$border-radius: .5rem;
+$border-radius-sm: .375rem;
+$border-radius-lg: .75rem;
+$border-radius-xl: 1rem;
+$enable-shadows: false;
+
+$btn-font-weight: 500;
+$input-btn-padding-x: .875rem;
+$btn-padding-x-sm: .625rem;
+
+$input-bg: var(--app-fill);
+$input-border-color: transparent;
+$input-focus-border-color: $primary;
+$input-focus-box-shadow: none;
+$form-label-font-size: .75rem;
+$form-label-font-weight: 500;
+$form-label-color: var(--bs-secondary-color);
+$form-label-margin-bottom: .25rem;
+$form-text-font-size: .6875rem;
+$form-text-margin-top: .25rem;
+
+$card-bg: var(--app-surface);
+$card-border-color: var(--bs-border-color);
+$card-cap-bg: var(--bs-tertiary-bg);
+
+$modal-content-bg: var(--app-surface);
+$modal-content-border-width: 0;
+$modal-header-padding: .875rem 1.25rem;
+$modal-inner-padding: 1.25rem;
+$modal-backdrop-opacity: .4;
+$modal-sm: 448px;
+$modal-lg: 768px;
+
+$offcanvas-bg-color: var(--app-surface);
+
+$dropdown-bg: var(--app-surface);
+$dropdown-border-color: var(--bs-border-color);
+$dropdown-font-size: .875rem;
+$dropdown-min-width: 14rem;
+$dropdown-link-hover-bg: var(--bs-tertiary-bg);
+$dropdown-link-active-bg: var(--bs-tertiary-bg);
+$dropdown-link-active-color: var(--bs-body-color);
+$dropdown-item-padding-y: .5rem;
+$dropdown-item-padding-x: 1rem;
+
+$table-bg: transparent;
+$table-color: var(--bs-body-color);
+$table-th-font-weight: 400;
+$table-cell-padding-y: .75rem;
+$table-cell-padding-x: .75rem;
+
+$badge-font-size: .75rem;
+$badge-font-weight: 500;
+$badge-padding-y: .25rem;
+$badge-padding-x: .625rem;
+
+$progress-height: .375rem;
+$progress-bg: var(--bs-tertiary-bg);
+$progress-border-radius: 50rem;
+
+$nav-link-font-size: .875rem;
+
+@import "bootstrap/scss/bootstrap";
+
+// ---------------------------------------------------------------------------
+// App-level tokens that Bootstrap does not provide
+// ---------------------------------------------------------------------------
+:root,
+[data-bs-theme="light"] {
+  --app-surface: #FFFFFF;      // cards, header, panels
+  --app-fill: #F0F0F0;         // inputs, ghost buttons, hover
+  --app-fill-hover: #E6E6E6;
+  --app-canvas: #F0F0F0;       // background behind panels (workspace, admin)
+  --app-scrollbar: #E6E6E6;
+  --app-scrollbar-hover: #D1D1D1;
+}
+
+[data-bs-theme="dark"] {
+  --app-surface: #282828;
+  --app-fill: #333333;
+  --app-fill-hover: #3E3E3E;
+  --app-canvas: #1A1A1A;
+  --app-scrollbar: #3E3E3E;
+  --app-scrollbar-hover: #595959;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--app-scrollbar); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--app-scrollbar-hover); }
+
+// ---------------------------------------------------------------------------
+// Utilities (named after Bootstrap's own conventions)
+// ---------------------------------------------------------------------------
+.bg-surface { background-color: var(--app-surface) !important; }
+.bg-canvas { background-color: var(--app-canvas) !important; }
+// Inverted block: dark in light mode, light in dark mode
+.bg-contrast {
+  background-color: var(--bs-body-color) !important;
+  color: var(--bs-body-bg) !important;
+}
+
+.fs-2xs { font-size: .6875rem !important; }  // 11px
+.fs-xs { font-size: .75rem !important; }     // 12px
+.fs-sm { font-size: .875rem !important; }    // 14px (= body)
+.fs-base { font-size: 1rem !important; }     // 16px
+.fs-lg { font-size: 1.125rem !important; }   // 18px
+.fs-xl { font-size: 1.25rem !important; }    // 20px
+.fs-2xl { font-size: 1.5rem !important; }    // 24px
+.fs-3xl { font-size: 1.875rem !important; }  // 30px
+
+.cursor-pointer { cursor: pointer; }
+.min-w-0 { min-width: 0; }
+.min-h-0 { min-height: 0; }
+
+.hover-bg { transition: background-color .15s ease; }
+.hover-bg:hover { background-color: var(--bs-tertiary-bg); }
+
+.app-container { max-width: 1300px; }
+.app-header { height: 50px; }
+
+$difficulty-colors: (
+  "easy": #00B8A3,
+  "medium": #FFB800,
+  "hard": #FF375F,
+);
+
+@each $name, $color in $difficulty-colors {
+  .text-#{$name} { color: $color !important; }
+  .bg-#{$name}-soft { background-color: rgba($color, .1) !important; }
+}
+
+// ---------------------------------------------------------------------------
+// Components
+// ---------------------------------------------------------------------------
+
+// Square 32px toolbar button (icon only). Add .w-auto .px-2 for icon + text.
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .375rem;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--bs-border-radius-sm);
+  background: transparent;
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+  transition: background-color .15s ease, color .15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: var(--app-fill);
+    color: var(--bs-emphasis-color);
+  }
+
+  &:disabled { opacity: .3; cursor: default; }
+
+  &.icon-btn-danger:hover:not(:disabled) { color: $danger; }
+  &.icon-btn-success:hover:not(:disabled) { color: $success; }
+}
+
+.btn-ghost {
+  --bs-btn-color: var(--bs-body-color);
+  --bs-btn-bg: var(--app-fill);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--bs-emphasis-color);
+  --bs-btn-hover-bg: var(--app-fill-hover);
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-color: var(--bs-emphasis-color);
+  --bs-btn-active-bg: var(--app-fill-hover);
+  --bs-btn-active-border-color: transparent;
+  --bs-btn-disabled-color: var(--bs-secondary-color);
+  --bs-btn-disabled-bg: var(--app-fill);
+  --bs-btn-disabled-border-color: transparent;
+}
+
+.btn-soft-primary {
+  --bs-btn-color: #{$primary};
+  --bs-btn-bg: #{rgba($primary, .15)};
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: #{$primary};
+  --bs-btn-hover-bg: #{rgba($primary, .25)};
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-color: #{$primary};
+  --bs-btn-active-bg: #{rgba($primary, .25)};
+  --bs-btn-active-border-color: transparent;
+  --bs-btn-disabled-color: #{$primary};
+  --bs-btn-disabled-bg: #{rgba($primary, .15)};
+  --bs-btn-disabled-border-color: transparent;
+}
+
+// Inverted button: dark in light mode, light in dark mode
+.btn-contrast {
+  --bs-btn-color: var(--bs-body-bg);
+  --bs-btn-bg: var(--bs-body-color);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--bs-body-bg);
+  --bs-btn-hover-bg: var(--bs-emphasis-color);
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-color: var(--bs-body-bg);
+  --bs-btn-active-bg: var(--bs-emphasis-color);
+  --bs-btn-disabled-color: var(--bs-body-bg);
+  --bs-btn-disabled-bg: var(--bs-body-color);
+  --bs-btn-disabled-border-color: transparent;
+}
+
+.avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 50%;
+  background-color: $primary;
+  color: #fff;
+  font-size: .875rem;
+  font-weight: 600;
+
+  &.avatar-sm { width: 1.5rem; height: 1.5rem; font-size: .75rem; }
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+// Top navigation links (Navbar)
+.app-nav .nav-link {
+  --bs-nav-link-color: var(--bs-secondary-color);
+  --bs-nav-link-hover-color: var(--bs-emphasis-color);
+  --bs-nav-link-padding-x: .75rem;
+  --bs-nav-link-padding-y: .375rem;
+  border-radius: var(--bs-border-radius-sm);
+
+  &.active { color: var(--bs-emphasis-color); font-weight: 500; }
+}
+
+// Segmented tabs: muted links, active one sits on the surface color
+.nav-soft {
+  --bs-nav-link-color: var(--bs-secondary-color);
+  --bs-nav-link-hover-color: var(--bs-body-color);
+  --bs-nav-link-padding-x: .75rem;
+  --bs-nav-link-padding-y: .375rem;
+  --bs-nav-pills-border-radius: var(--bs-border-radius-sm);
+  --bs-nav-pills-link-active-color: var(--bs-emphasis-color);
+  --bs-nav-pills-link-active-bg: var(--app-surface);
+  gap: .25rem;
+
+  .nav-link { display: inline-flex; align-items: center; gap: .375rem; }
+  .nav-link.active { font-weight: 500; }
+}
+
+// Sidebar links (AdminLayout)
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  width: 100%;
+  padding: .5rem .75rem;
+  border: 0;
+  border-radius: var(--bs-border-radius);
+  background: transparent;
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+  text-align: left;
+  transition: background-color .15s ease, color .15s ease;
+
+  &:hover { background-color: var(--bs-tertiary-bg); color: var(--bs-emphasis-color); }
+  &.active { background-color: var(--app-fill); color: var(--bs-emphasis-color); font-weight: 500; }
+}
+
+.form-switch-success .form-check-input:checked {
+  background-color: $success;
+  border-color: $success;
+}
+
+.modal-title { font-size: 1rem; font-weight: 600; }
+
+.offcanvas-md-width { --bs-offcanvas-width: 28rem; }
+.offcanvas-lg-width { --bs-offcanvas-width: 32rem; }
+
+.app-toast {
+  --bs-toast-bg: #262626;
+  --bs-toast-color: #FFFFFF;
+  --bs-toast-border-width: 0;
+}
+
+[data-bs-theme="dark"] .app-toast {
+  --bs-toast-bg: #EFF1F6;
+  --bs-toast-color: #262626;
+}
+
+// Rendered Markdown (problem statements, theories)
+.markdown-body {
+  font-size: .875rem;
+  line-height: 1.7;
+
+  h1, h2, h3 { color: var(--bs-emphasis-color); letter-spacing: -.01em; }
+  h1 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 1.5rem 0 .75rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--bs-border-color);
+  }
+  h2 { font-size: 1rem; margin: 1.25rem 0 .5rem; }
+  h3 { font-size: .875rem; margin: 1rem 0 .375rem; }
+  > :first-child { margin-top: 0; }
+
+  p { margin: .5rem 0; }
+  ul, ol { margin: .5rem 0; padding-left: 1.25rem; }
+  li + li { margin-top: .25rem; }
+  strong { font-weight: 600; color: var(--bs-emphasis-color); }
+
+  pre {
+    margin: .75rem 0;
+    padding: .75rem;
+    overflow-x: auto;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    background-color: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+    font-size: .75rem;
+  }
+
+  :not(pre) > code {
+    padding: .125rem .375rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .25rem;
+    background-color: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+    font-size: .75rem;
+    font-weight: 500;
+  }
+
+  blockquote {
+    margin: .75rem 0;
+    padding: .5rem 1rem;
+    border-left: 2px solid var(--bs-body-color);
+    border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
+    background-color: var(--bs-tertiary-bg);
+  }
+}
+
+[data-bs-theme="dark"] .markdown-body pre { background-color: var(--app-canvas); }

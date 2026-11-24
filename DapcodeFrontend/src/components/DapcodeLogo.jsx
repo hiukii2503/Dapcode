@@ -1,20 +1,21 @@
 import React from 'react';
 
-export default function DapcodeLogo({ size = 'md', className = '' }) {
-  const sizeClasses = {
-    xs: 'h-5 w-5',
-    sm: 'h-6 w-6',
-    md: 'h-7 w-7',
-    lg: 'h-9 w-9',
-    xl: 'h-11 w-11',
-  };
+const SIZE_PX = {
+  xs: 20,
+  sm: 24,
+  md: 28,
+  lg: 36,
+  xl: 44,
+};
 
-  const currentSize = sizeClasses[size] || sizeClasses.md;
+export default function DapcodeLogo({ size = 'md', className = '' }) {
+  const px = SIZE_PX[size] || SIZE_PX.md;
 
   return (
-    <div className={`relative inline-flex items-center justify-center flex-shrink-0 select-none ${className}`}>
+    <div className={`d-inline-flex align-items-center justify-content-center flex-shrink-0 user-select-none ${className}`.trim()}>
       <svg
-        className={`${currentSize} transition-transform hover:scale-105`}
+        width={px}
+        height={px}
         viewBox="50 110 1060 1060"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="LiệtCode Logo"

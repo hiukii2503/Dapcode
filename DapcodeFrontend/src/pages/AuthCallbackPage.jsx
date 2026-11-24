@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Spinner } from 'react-bootstrap';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { loginWithGoogle, getCurrentUser } from '../api/auth';
-import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
@@ -86,7 +87,7 @@ export default function AuthCallbackPage() {
             localStorage.setItem('dapcode_user', JSON.stringify(userObj));
           }
           setStatus('success');
-          
+
           const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
           sessionStorage.removeItem('dapcode_auth_return');
           setTimeout(() => {
@@ -127,42 +128,51 @@ export default function AuthCallbackPage() {
   }, [location, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FFFFFF] dark:bg-[#1A1A1A] p-4 text-[#262626] dark:text-[#EFF1F6]">
-      <div className="w-full max-w-md rounded-lg border border-[#E6E6E6] dark:border-[#3E3E3E] bg-[#FFFFFF] dark:bg-[#282828] p-8 text-center">
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-canvas p-3">
+      <div className="card w-100 p-4 text-center" style={{ maxWidth: 448 }}>
         {status === 'loading' && (
-          <div className="flex flex-col items-center space-y-4">
-            <Loader2 className="h-8 w-8 text-neutral-700 dark:text-neutral-300 animate-spin" />
-            <h2 className="text-sm font-semibold">Đang xác thực tài khoản Google...</h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <div className="d-flex flex-column align-items-center gap-3 py-2">
+            <Spinner animation="border" className="text-body-secondary" />
+            <h2 className="fs-sm fw-semibold text-body-emphasis mb-0">
+              Đang xác thực tài khoản Google...
+            </h2>
+            <p className="fs-xs text-body-secondary mb-0">
               Vui lòng đợi giây lát trong khi LiệtCode đồng bộ tài khoản của bạn.
             </p>
           </div>
         )}
 
         {status === 'success' && (
-          <div className="flex flex-col items-center space-y-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E8F7EE] dark:bg-[#14532D]/20 text-[#2CBB5D] dark:text-[#2CBB5D] border border-[#B7E4C7] dark:border-[#166534]/40">
-              <CheckCircle2 className="h-6 w-6" />
+          <div className="d-flex flex-column align-items-center gap-3 py-2">
+            <div
+              className="d-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success border border-success-subtle"
+              style={{ width: 48, height: 48 }}
+            >
+              <CheckCircle2 size={24} />
             </div>
-            <h2 className="text-sm font-semibold">Đăng nhập thành công!</h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            <h2 className="fs-sm fw-semibold text-body-emphasis mb-0">Đăng nhập thành công!</h2>
+            <p className="fs-xs text-body-secondary mb-0">
               Đang chuyển hướng về trang học tập...
             </p>
           </div>
         )}
 
         {status === 'error' && (
-          <div className="flex flex-col items-center space-y-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FDEDED] dark:bg-[#7F1D1D]/20 text-[#EF4743] dark:text-[#FF6B68] border border-[#FECACA] dark:border-[#991B1B]/40">
-              <AlertCircle className="h-6 w-6" />
+          <div className="d-flex flex-column align-items-center gap-3 py-2">
+            <div
+              className="d-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger border border-danger-subtle"
+              style={{ width: 48, height: 48 }}
+            >
+              <AlertCircle size={24} />
             </div>
-            <h2 className="text-sm font-semibold text-[#EF4743] dark:text-[#FF6B68]">
+            <h2 className="fs-sm fw-semibold text-danger mb-0">
               Đăng nhập thất bại
             </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">{errorMessage}</p>
+            <p className="fs-xs text-body-secondary mb-0">{errorMessage}</p>
             <button
+              type="button"
               onClick={() => navigate('/roadmap', { replace: true })}
-              className="mt-2 rounded-lg bg-[#262626] hover:bg-[#3C3C3C] dark:bg-[#EFF1F6] dark:hover:bg-[#E6E6E6] px-4 py-2 text-xs font-medium text-[#F7F8FA] dark:text-[#262626] transition-colors"
+              className="btn btn-sm btn-contrast mt-1 px-3 py-2 fs-xs"
             >
               Quay lại trang chủ
             </button>
