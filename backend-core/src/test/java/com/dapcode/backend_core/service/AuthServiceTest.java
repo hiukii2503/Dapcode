@@ -91,7 +91,6 @@ public class AuthServiceTest {
 
     @Test
     void testAdminLogin_DefaultPasswordNoLongerBypassesHash() {
-        // Trước đây "admin123" luôn đăng nhập được dù hash không khớp (cửa sau).
         testAdmin.setPasswordHash("hashed-new-strong-password");
         AdminLoginRequest req = AdminLoginRequest.builder()
                 .usernameOrEmail("admin@dapcode.io")

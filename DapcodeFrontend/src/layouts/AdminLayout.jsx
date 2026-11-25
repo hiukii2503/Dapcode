@@ -48,7 +48,6 @@ export default function AdminLayout() {
     <ToastProvider>
       <div className="d-flex min-vh-100 bg-canvas">
         <aside className="sticky-top d-flex flex-column flex-shrink-0 vh-100 border-end bg-surface" style={{ maxWidth: 240 }}>
-          {/* Forces the full 240px width from md up; below md the sidebar collapses to an icon rail */}
           <div className="d-none d-md-block" style={{ width: 239 }} />
 
           <Link to="/admin" className="app-header d-flex align-items-center gap-2 border-bottom px-3 text-decoration-none text-body-emphasis">

@@ -54,7 +54,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .build();
         });
 
-        // Chặn user nếu tài khoản đã bị khóa
         if (!user.isActive()) {
             log.warn("Login blocked: user account is locked/inactive: email={}", email);
             String errorUrl = UriComponentsBuilder.fromUriString(redirectUri)

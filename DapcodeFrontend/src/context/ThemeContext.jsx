@@ -3,14 +3,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  // Default to 'light' theme as requested by the user
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('dapcode_theme') || 'light';
   });
 
   useEffect(() => {
     localStorage.setItem('dapcode_theme', theme);
-    // Bootstrap 5.3 color modes
     document.documentElement.dataset.bsTheme = theme;
   }, [theme]);
 

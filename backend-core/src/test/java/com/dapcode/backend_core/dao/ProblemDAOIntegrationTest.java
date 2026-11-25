@@ -15,10 +15,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import com.dapcode.backend_core.entity.Problem;
 
-/**
- * Kiểm thử tích hợp (Integration Tests) cho module Bài tập.
- * Chạy trực tiếp trên Cơ sở dữ liệu thật thông qua ProblemDAO và HikariCP Connection Pooling.
- */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ProblemDAOIntegrationTest {
 
@@ -33,7 +29,6 @@ public class ProblemDAOIntegrationTest {
     @Order(1)
     @DisplayName("Kịch bản 1: Luồng tích hợp CRUD bài tập (Create -> Read -> Update -> Delete) trên DB thật qua HikariCP")
     void test1_CRUD_Flow() {
-        // 1. CREATE: Thêm mới bài tập
         String uniqueSlug = "integration-crud-" + System.currentTimeMillis();
         Problem newProblem = Problem.builder()
                 .title("Bài tập Kiểm thử Tích hợp CRUD")
@@ -50,7 +45,6 @@ public class ProblemDAOIntegrationTest {
         assertNotNull(inserted, "Thêm bài tập qua HikariCP phải thành công");
         assertNotNull(inserted.getId(), "ID phải được tạo tự động");
 
-        // 2. READ: Tìm theo ID và theo Slug
         Optional<Problem> foundById = problemDAO.findById(inserted.getId());
         assertTrue(foundById.isPresent(), "Phải tìm thấy bài tập theo ID");
         assertEquals("Bài tập Kiểm thử Tích hợp CRUD", foundById.get().getTitle());
@@ -58,7 +52,6 @@ public class ProblemDAOIntegrationTest {
         Optional<Problem> foundBySlug = problemDAO.findBySlug(uniqueSlug);
         assertTrue(foundBySlug.isPresent(), "Phải tìm thấy bài tập theo Slug");
 
-        // 3. UPDATE: Cập nhật thông tin bài tập
         inserted.setTitle("Bài tập Kiểm thử CRUD (Đã sửa)");
         inserted.setDifficulty("HARD");
         Problem updated = problemDAO.update(inserted);
@@ -66,7 +59,6 @@ public class ProblemDAOIntegrationTest {
         assertEquals("Bài tập Kiểm thử CRUD (Đã sửa)", updated.getTitle());
         assertEquals("HARD", updated.getDifficulty());
 
-        // 4. DELETE: Xóa bài tập
         boolean deleted = problemDAO.delete(inserted.getId());
         assertTrue(deleted, "Xóa bài tập phải thành công");
 
@@ -92,12 +84,10 @@ public class ProblemDAOIntegrationTest {
         Problem saved = problemDAO.insert(p);
         assertNotNull(saved);
 
-        // Thực hiện tìm kiếm
         List<Problem> results = problemDAO.findWithFilters(null, null, keyword, 0, 10);
         assertFalse(results.isEmpty(), "Kết quả tìm kiếm không được rỗng");
         assertTrue(results.get(0).getTitle().contains(keyword), "Tiêu đề kết quả phải chứa từ khóa tìm kiếm");
 
-        // Dọn dẹp dữ liệu
         problemDAO.delete(saved.getId());
     }
 
@@ -119,13 +109,11 @@ public class ProblemDAOIntegrationTest {
         Problem saved = problemDAO.insert(p);
         assertNotNull(saved);
 
-        // Lọc theo đúng Category và Difficulty
         List<Problem> results = problemDAO.findWithFilters(testCategory, "HARD", null, 0, 10);
         assertFalse(results.isEmpty(), "Phải có kết quả thỏa mãn bộ lọc");
         assertEquals(testCategory, results.get(0).getCategory());
         assertEquals("HARD", results.get(0).getDifficulty());
 
-        // Dọn dẹp dữ liệu
         problemDAO.delete(saved.getId());
     }
 
@@ -133,7 +121,6 @@ public class ProblemDAOIntegrationTest {
     @Order(4)
     @DisplayName("Kịch bản 4: Kiểm thử tích hợp Phân trang danh sách bài tập (Pagination)")
     void test4_Pagination() {
-        // Tạo 3 bài tập mẫu
         Problem p1 = problemDAO.insert(Problem.builder()
                 .title("Paging 1 " + System.currentTimeMillis())
                 .slug("paging-1-" + System.currentTimeMillis())
@@ -150,7 +137,6 @@ public class ProblemDAOIntegrationTest {
                 .descriptionMarkdown("Desc")
                 .build());
 
-        // Lấy trang 0 với size = 2
         List<Problem> page0 = problemDAO.findWithFilters(null, null, null, 0, 2);
         assertNotNull(page0);
         assertTrue(page0.size() <= 2, "Số lượng bài tập ở mỗi trang tối đa là 2");
@@ -158,7 +144,6 @@ public class ProblemDAOIntegrationTest {
         long totalCount = problemDAO.countWithFilters(null, null, null);
         assertTrue(totalCount >= 2, "Tổng số bài tập trong DB phải ít nhất là 2");
 
-        // Dọn dẹp
         if (p1 != null) problemDAO.delete(p1.getId());
         if (p2 != null) problemDAO.delete(p2.getId());
     }
@@ -167,7 +152,6 @@ public class ProblemDAOIntegrationTest {
     @Order(5)
     @DisplayName("Kịch bản 5: Kiểm thử tích hợp Bắt lỗi Validation dữ liệu đầu vào (Validation Error Handling)")
     void test5_Validation_ErrorHandling() {
-        // 1. Kiểm tra tiêu đề để trống
         Problem invalidTitle = Problem.builder()
                 .title("") // Rỗng -> vi phạm
                 .difficulty("EASY")
@@ -179,7 +163,6 @@ public class ProblemDAOIntegrationTest {
         });
         assertEquals("Tiêu đề bài tập không được để trống!", exTitle.getMessage());
 
-        // 2. Kiểm tra độ khó để trống
         Problem invalidDifficulty = Problem.builder()
                 .title("Bài tập hợp lệ")
                 .difficulty("") // Rỗng -> vi phạm
@@ -191,7 +174,6 @@ public class ProblemDAOIntegrationTest {
         });
         assertEquals("Độ khó không được để trống!", exDiff.getMessage());
 
-        // 3. Kiểm tra mô tả để trống
         Problem invalidDesc = Problem.builder()
                 .title("Bài tập hợp lệ")
                 .difficulty("EASY")

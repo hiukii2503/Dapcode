@@ -60,7 +60,6 @@ export default function TheoriesPage() {
       <Navbar />
 
       <main className="flex-grow-1 mx-auto w-100 px-3 px-sm-4 py-5" style={{ maxWidth: 1280 }}>
-        {/* Header Hero */}
         <div className="mb-5">
           <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-sm-between gap-3">
             <div>
@@ -79,9 +78,7 @@ export default function TheoriesPage() {
             </div>
           </div>
 
-          {/* Search & Categories Bar */}
           <div className="mt-4 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
-            {/* Search Input */}
             <div className="position-relative flex-grow-1" style={{ maxWidth: 448 }}>
               <Search size={16} className="position-absolute top-50 start-0 translate-middle-y ms-3 text-body-secondary" />
               <input
@@ -94,7 +91,6 @@ export default function TheoriesPage() {
               />
             </div>
 
-            {/* Category Filter Pills */}
             <div className="d-flex align-items-center gap-2 overflow-x-auto pb-1 pb-sm-0">
               <button type="button" onClick={() => setSelectedCategory('ALL')} className={pillCls(selectedCategory === 'ALL')}>
                 Tất cả ({theories.length})
@@ -108,7 +104,6 @@ export default function TheoriesPage() {
           </div>
         </div>
 
-        {/* Theories Content Grid */}
         {isLoading ? (
           <div className="d-flex flex-column align-items-center justify-content-center gap-3 py-5 my-4 text-body-secondary">
             <Spinner animation="border" size="sm" />
@@ -123,7 +118,6 @@ export default function TheoriesPage() {
                   className="card h-100 justify-content-between p-4 text-body text-decoration-none hover-bg"
                 >
                   <div>
-                    {/* Category Pill */}
                     <div className="d-flex align-items-center justify-content-between mb-3">
                       <span className="badge rounded-1 bg-body-tertiary border fs-2xs text-body">
                         {theory.category}
@@ -133,12 +127,10 @@ export default function TheoriesPage() {
                       </span>
                     </div>
 
-                    {/* Title */}
                     <h3 className="fs-base fw-semibold text-body-emphasis mb-2">
                       {theory.title}
                     </h3>
 
-                    {/* Summary */}
                     <p
                       className="fs-xs text-body-secondary mb-3"
                       style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}

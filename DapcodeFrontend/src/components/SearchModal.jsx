@@ -13,7 +13,6 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // If no problems were provided via prop, fetch real problems from backend
   useEffect(() => {
     if (isOpen) {
       if (!initialProblems || initialProblems.length === 0) {
@@ -37,7 +36,6 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
     }
   }, [isOpen, initialProblems]);
 
-  // Filter problems based on query
   const filteredProblems = query.trim() === ''
     ? problems.slice(0, 10)
     : problems.filter(
@@ -47,7 +45,6 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
           p.slug?.toLowerCase().includes(query.toLowerCase())
       ).slice(0, 12);
 
-  // Reset when opened (Escape / backdrop close is handled by Modal)
   useEffect(() => {
     if (isOpen) {
       setQuery('');
@@ -55,7 +52,6 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
     }
   }, [isOpen]);
 
-  // Keyboard navigation inside modal
   const handleInputKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -81,7 +77,6 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
       dialogClassName="mt-5 pt-sm-5"
       contentClassName="overflow-hidden"
     >
-      {/* Search Input Bar */}
       <div className="d-flex align-items-center gap-3 px-3 py-3 border-bottom bg-body-tertiary">
         <Search size={16} className="text-body-secondary flex-shrink-0" />
         <input
@@ -100,7 +95,6 @@ export default function SearchModal({ isOpen, onClose, problems: initialProblems
         <button type="button" className="btn-close" aria-label="Đóng" onClick={onClose} />
       </div>
 
-      {/* Results List */}
       <div className="overflow-y-auto p-2" style={{ maxHeight: 320 }}>
         {filteredProblems.length > 0 ? (
           filteredProblems.map((problem, idx) => {

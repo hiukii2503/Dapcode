@@ -13,10 +13,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateUserStatusRequest {
-    /**
-     * Trạng thái mới của tài khoản. Nhận cả khóa JSON "isActive" lẫn "active"
-     * (frontend và AdminUserResponse dùng "active").
-     */
     @NotNull(message = "Trạng thái tài khoản (isActive) không được để trống")
     @JsonAlias("active")
     private Boolean isActive;

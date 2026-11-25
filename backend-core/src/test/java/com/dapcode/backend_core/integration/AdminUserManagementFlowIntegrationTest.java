@@ -33,23 +33,6 @@ import com.dapcode.backend_core.entity.Users;
 import com.dapcode.backend_core.repository.UserRepository;
 import com.jayway.jsonpath.JsonPath;
 
-/**
- * Kiểm thử tích hợp luồng quản lý học viên của admin, chạy qua toàn bộ stack
- * (Security filter → Controller → Service → JPA → PostgreSQL thật):
- *
- * <pre>
- *   1. Đăng nhập admin      POST /api/v1/auth/admin-login
- *   2. Tìm kiếm học viên    GET  /api/v1/admin/users?search=...
- *   3. Khóa tài khoản       PUT  /api/v1/admin/users/{id}/status  {active:false}
- *   4. Mở khóa tài khoản    PUT  /api/v1/admin/users/{id}/status  {active:true}
- * </pre>
- *
- * Các bước chạy theo thứ tự và dùng chung trạng thái (token admin, id học viên).
- * Một học viên test với tên ngẫu nhiên được tạo trước khi chạy và xóa sau khi chạy,
- * nên không đụng tới dữ liệu có sẵn.
- *
- * Yêu cầu: PostgreSQL đang chạy theo cấu hình datasource trong application.yaml / .env.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -77,7 +60,6 @@ class AdminUserManagementFlowIntegrationTest {
     @Value("${app.admin.password}")
     private String adminPassword;
 
-    /** Chuỗi ngẫu nhiên để tìm kiếm chính xác học viên test, tránh trùng dữ liệu thật. */
     private final String keyword = "itflow" + UUID.randomUUID().toString().substring(0, 8);
 
     private UUID studentId;
@@ -94,8 +76,6 @@ class AdminUserManagementFlowIntegrationTest {
                 .isActive(true)
                 .build());
         studentId = student.getId();
-        // Học viên đăng nhập bằng Google nên test không gọi được API login thật;
-        // phát JWT trực tiếp để kiểm tra hiệu lực của việc khóa/mở khóa.
         studentToken = jwtTokenProvider.generateToken(student);
     }
 
@@ -105,10 +85,6 @@ class AdminUserManagementFlowIntegrationTest {
             userRepository.deleteById(studentId);
         }
     }
-
-    // ===================================================================
-    // BƯỚC 1: ĐĂNG NHẬP
-    // ===================================================================
 
     @Test
     @Order(10)
@@ -168,10 +144,6 @@ class AdminUserManagementFlowIntegrationTest {
         assertThat(adminToken).isNotBlank();
     }
 
-    // ===================================================================
-    // BƯỚC 2: TÌM KIẾM HỌC VIÊN
-    // ===================================================================
-
     @Test
     @Order(20)
     @DisplayName("2.1 Tìm theo username → trả về đúng học viên, đang hoạt động")
@@ -222,10 +194,6 @@ class AdminUserManagementFlowIntegrationTest {
                 .andExpect(jsonPath("$.data.totalElements").value(0))
                 .andExpect(jsonPath("$.data.content").isEmpty());
     }
-
-    // ===================================================================
-    // BƯỚC 3: KHÓA TÀI KHOẢN
-    // ===================================================================
 
     @Test
     @Order(30)
@@ -306,7 +274,6 @@ class AdminUserManagementFlowIntegrationTest {
     @Order(33)
     @DisplayName("3.3 Khóa học viên kèm lý do (body giống frontend gửi) → active=false, lưu lý do vào DB")
     void lock_student_success() throws Exception {
-        // Đúng định dạng src/api/admin.js: gửi cả "active" và "isActive".
         mockMvc.perform(put(USERS_URL + "/" + studentId + "/status")
                 .header(HttpHeaders.AUTHORIZATION, bearer(adminToken))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -344,10 +311,6 @@ class AdminUserManagementFlowIntegrationTest {
         mockMvc.perform(get(ME_URL).header(HttpHeaders.AUTHORIZATION, bearer(studentToken)))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ===================================================================
-    // BƯỚC 4: MỞ KHÓA TÀI KHOẢN
-    // ===================================================================
 
     @Test
     @Order(40)
@@ -389,10 +352,6 @@ class AdminUserManagementFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(studentId.toString()));
     }
-
-    // ===================================================================
-    // Helpers
-    // ===================================================================
 
     private static String bearer(String token) {
         return "Bearer " + token;

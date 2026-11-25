@@ -89,7 +89,6 @@ public class Judge0ClientImpl implements Judge0Client {
             }
         }
 
-        // Trường hợp hết thời gian poll, gọi lần cuối trả về kết quả hiện tại
         try {
             BatchResponse finalResult = judge0RestClient.get()
                     .uri(getUri)

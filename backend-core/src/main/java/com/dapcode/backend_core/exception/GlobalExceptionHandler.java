@@ -51,14 +51,12 @@ public class GlobalExceptionHandler {
                 .body(apiResponse);
     }
 
-    /** Body JSON sai cú pháp hoặc sai kiểu dữ liệu → lỗi của client (400), không phải 500. */
     @ExceptionHandler(value = HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handlingUnreadableBody(HttpMessageNotReadableException exception) {
         return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getHttpStatus())
                 .body(ApiResponse.error(ErrorCode.INVALID_REQUEST));
     }
 
-    /** Tham số path/query sai kiểu (ví dụ id không phải UUID) → 400. */
     @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handlingTypeMismatch(MethodArgumentTypeMismatchException exception) {
         return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getHttpStatus())

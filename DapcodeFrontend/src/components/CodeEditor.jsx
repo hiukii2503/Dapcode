@@ -69,12 +69,10 @@ export default function CodeEditor({
 
   return (
     <div className="d-flex h-100 flex-column bg-surface rounded-2 overflow-hidden">
-      {/* Editor Toolbar */}
       <div
         className="d-flex align-items-center justify-content-between border-bottom bg-body-tertiary px-3 flex-shrink-0"
         style={{ height: 40 }}
       >
-        {/* Language selector */}
         <div className="d-flex align-items-center gap-3">
           <div className="d-flex align-items-center gap-2 fs-xs text-body-secondary">
             <Code2 size={14} />
@@ -93,7 +91,6 @@ export default function CodeEditor({
           </select>
         </div>
 
-        {/* Right Tools: Reset */}
         <div className="d-flex align-items-center gap-2">
           <button
             type="button"
@@ -107,7 +104,6 @@ export default function CodeEditor({
         </div>
       </div>
 
-      {/* Monaco Editor Container */}
       <div className="flex-grow-1 w-100 position-relative min-h-0">
         <Editor
           height="100%"

@@ -41,7 +41,6 @@ function App() {
             <Route path="/theories/:slug" element={<TheoryDetailPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-            {/* Admin routes */}
             <Route
               path="/admin"
               element={

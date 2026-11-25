@@ -29,7 +29,6 @@ export default function AdminRoute({ children }) {
   const checkAdminAuth = () => {
     const token = localStorage.getItem('dapcode_token');
 
-    // 1. Không có token -> Chưa đăng nhập, từ chối và hiện form
     if (!token) {
       localStorage.removeItem('dapcode_user');
       setCurrentUser(null);
@@ -37,24 +36,19 @@ export default function AdminRoute({ children }) {
       return;
     }
 
-    // 2. Có token -> Gửi lên Server để verify tính hợp lệ chữ ký mật mã qua /api/v1/users/me
     getCurrentUser()
       .then((res) => {
         const u = res?.data || res;
-        // Kiểm tra chặt chẽ vai trò ROLE_ADMIN từ phía server database
         if (u && u.role === 'ROLE_ADMIN') {
           localStorage.setItem('dapcode_user', JSON.stringify(u));
           setCurrentUser(u);
           setState('ok');
         } else {
-          // Token hợp lệ nhưng tài khoản không có quyền Admin
           setCurrentUser(u);
           setState('denied');
         }
       })
       .catch(() => {
-        // Token giả mạo, hết hạn hoặc không khớp chữ ký số bí mật (HTTP 401/403)
-        // Thu hồi token và dữ liệu trong localStorage
         localStorage.removeItem('dapcode_token');
         localStorage.removeItem('dapcode_user');
         setCurrentUser(null);
@@ -139,18 +133,15 @@ export default function AdminRoute({ children }) {
     );
   }
 
-  // Once authenticated with ROLE_ADMIN, render the full admin menu and layout
   if (state === 'ok') {
     return children;
   }
 
-  // Giao diện Modal Đăng Nhập Quản Trị Viên riêng biệt tại URL Admin (luôn dùng nền tối)
   return (
     <div
       data-bs-theme="dark"
       className="position-relative d-flex min-vh-100 align-items-center justify-content-center p-3 bg-black text-body"
     >
-      {/* Background ambient pattern & glowing spotlight */}
       <div
         className="pe-none position-absolute top-0 start-0 w-100 h-100"
         style={{
@@ -164,9 +155,7 @@ export default function AdminRoute({ children }) {
         style={{ width: 500, height: 500, background: 'rgba(255, 161, 22, 0.1)', filter: 'blur(120px)' }}
       />
 
-      {/* Admin Login Modal Container */}
       <div className="position-relative w-100 rounded-4 border bg-surface p-4 shadow-lg" style={{ maxWidth: 448 }}>
-        {/* Header Branding */}
         <div className="text-center">
           <div
             className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-4 border border-primary border-opacity-25 bg-primary bg-opacity-10 text-primary"
@@ -189,7 +178,6 @@ export default function AdminRoute({ children }) {
           </p>
         </div>
 
-        {/* Warning if logged in as regular student */}
         {currentUser && currentUser.role !== 'ROLE_ADMIN' && (
           <div className="alert alert-danger mt-3 mb-0 p-3 rounded-3 fs-xs">
             <div className="d-flex align-items-start gap-2">
@@ -214,7 +202,6 @@ export default function AdminRoute({ children }) {
           </div>
         )}
 
-        {/* Error message */}
         {errorMessage && (
           <div className="alert alert-danger mt-3 mb-0 p-3 rounded-3 fs-xs d-flex align-items-start gap-2">
             <ShieldAlert size={16} className="flex-shrink-0" />
@@ -222,7 +209,6 @@ export default function AdminRoute({ children }) {
           </div>
         )}
 
-        {/* Username & Password Form */}
         <form onSubmit={handlePasswordLogin} className="mt-4 d-flex flex-column gap-3">
           <div>
             <label className="form-label">
@@ -277,7 +263,6 @@ export default function AdminRoute({ children }) {
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -288,7 +273,6 @@ export default function AdminRoute({ children }) {
           </button>
         </form>
 
-        {/* Separator */}
         <div className="my-3 d-flex align-items-center gap-2">
           <div className="flex-grow-1 border-top" />
           <span className="fs-2xs fw-semibold text-uppercase text-nowrap text-body-secondary">
@@ -297,7 +281,6 @@ export default function AdminRoute({ children }) {
           <div className="flex-grow-1 border-top" />
         </div>
 
-        {/* Google OAuth & Quick Dev Mode */}
         <div className="d-flex flex-column gap-2">
           <button
             type="button"
@@ -326,10 +309,8 @@ export default function AdminRoute({ children }) {
             <span>Đăng nhập Google (Tài khoản đã phân quyền Admin)</span>
           </button>
 
-
         </div>
 
-        {/* Back to student page link */}
         <div className="mt-4 border-top pt-3 text-center">
           <Link
             to="/roadmap"

@@ -25,12 +25,6 @@ import com.dapcode.backend_core.repository.TestCaseRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Service quản lý bài tập sử dụng trực tiếp tầng ProblemDAO kết hợp HikariCP
- * Connection Pooling.
- * Tầng Controller giữ nguyên DTO và validation chuẩn để tối ưu trải nghiệm và
- * bảo mật.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -82,7 +76,6 @@ public class ProblemServiceImpl implements ProblemService {
 
         @Override
         public ProblemDetailResponse getProblemBySlug(String slug) {
-                // Lấy bài tập qua DAO
                 Problem problem = problemDAO.findBySlug(slug)
                                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
 

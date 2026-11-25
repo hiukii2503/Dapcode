@@ -11,7 +11,6 @@ export default function StreakModal({ isOpen, onClose, streakCount = 1 }) {
       <Modal.Body className="position-relative p-4">
         <button type="button" className="btn-close position-absolute top-0 end-0 m-3" aria-label="Đóng" onClick={onClose} />
 
-        {/* Header Flame */}
         <div className="text-center mb-4">
           <div
             className="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-4 border bg-body-tertiary"
@@ -27,7 +26,6 @@ export default function StreakModal({ isOpen, onClose, streakCount = 1 }) {
           </p>
         </div>
 
-        {/* Weekly Calendar */}
         <div className="rounded-3 border bg-body-tertiary p-3 mb-3">
           <div className="d-flex align-items-center gap-2 fs-xs text-body-secondary mb-2">
             <Calendar size={14} />
@@ -54,7 +52,6 @@ export default function StreakModal({ isOpen, onClose, streakCount = 1 }) {
           </div>
         </div>
 
-        {/* Milestone badge */}
         <div className="d-flex align-items-center gap-3 rounded-3 border bg-body-tertiary p-3 fs-xs">
           <Award size={20} className="flex-shrink-0" />
           <div>

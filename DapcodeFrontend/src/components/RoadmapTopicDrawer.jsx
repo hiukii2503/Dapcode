@@ -25,7 +25,6 @@ export default function RoadmapTopicDrawer({
 
   return (
     <Offcanvas show={isOpen} onHide={onClose} placement="end" className="offcanvas-md-width">
-      {/* Drawer Header */}
       <Offcanvas.Header closeButton className="border-bottom bg-body-tertiary px-4 py-3">
         <div>
           <Offcanvas.Title as="h2" className="fs-sm fw-semibold text-body-emphasis mb-0">
@@ -37,12 +36,10 @@ export default function RoadmapTopicDrawer({
         </div>
       </Offcanvas.Header>
 
-      {/* Progress bar */}
       <div className="progress rounded-0 flex-shrink-0 border-bottom" style={{ height: 4 }}>
         <div className="progress-bar bg-contrast" style={{ width: `${percent}%` }} />
       </div>
 
-      {/* Drawer Body Problem List */}
       <Offcanvas.Body className="d-flex flex-column gap-2 p-3">
         {topicProblems.length > 0 ? (
           topicProblems.map((problem) => {
@@ -56,7 +53,6 @@ export default function RoadmapTopicDrawer({
                 }`}
               >
                 <div className="d-flex align-items-center gap-3 min-w-0">
-                  {/* Checkbox */}
                   <button
                     type="button"
                     onClick={() => onToggleComplete(problem.slug)}
@@ -68,7 +64,6 @@ export default function RoadmapTopicDrawer({
                     <Check size={12} className={isCompleted ? '' : 'invisible'} />
                   </button>
 
-                  {/* Title */}
                   <Link
                     to={`/problems/${problem.slug}`}
                     className="text-truncate fs-xs fw-medium link-body-emphasis text-decoration-none"
@@ -93,7 +88,6 @@ export default function RoadmapTopicDrawer({
         )}
       </Offcanvas.Body>
 
-      {/* Footer Summary */}
       <div className="border-top bg-body-tertiary p-3 d-flex align-items-center justify-content-between fs-xs text-body-secondary">
         <div className="d-flex align-items-center gap-2">
           <Trophy size={14} className="text-primary" />

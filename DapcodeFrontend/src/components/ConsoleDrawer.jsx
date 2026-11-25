@@ -70,7 +70,6 @@ export default function ConsoleDrawer({
 
   return (
     <div className="d-flex h-100 flex-column bg-surface rounded-2 overflow-hidden">
-      {/* Drawer Header Tabs */}
       <div
         className="d-flex align-items-center justify-content-between border-bottom bg-body-tertiary px-3 flex-shrink-0"
         style={{ height: 40 }}
@@ -95,7 +94,6 @@ export default function ConsoleDrawer({
           </button>
         </nav>
 
-        {/* Close / Collapse Drawer Button */}
         {onClose && (
           <button
             type="button"
@@ -108,11 +106,9 @@ export default function ConsoleDrawer({
         )}
       </div>
 
-      {/* Drawer Body Content */}
       <div className="flex-grow-1 overflow-y-auto p-3 fs-xs">
         {activeTab === 'testcases' ? (
           <div>
-            {/* Case selector pills */}
             <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
               {publicTestCases.map((tc, idx) => (
                 <button
@@ -128,7 +124,6 @@ export default function ConsoleDrawer({
               ))}
             </div>
 
-            {/* Selected case details */}
             <div className="d-flex flex-column gap-3">
               <div>
                 <div className="fs-2xs fw-medium text-body-secondary mb-1">Input:</div>
@@ -148,7 +143,6 @@ export default function ConsoleDrawer({
             </div>
           </div>
         ) : (
-          /* Test Result / Submission SSE Stream View */
           <div>
             {isBusy ? (
               <div className="d-flex flex-column align-items-center justify-content-center py-5 gap-3">
@@ -183,7 +177,6 @@ export default function ConsoleDrawer({
               </div>
             ) : result ? (
               <div className="d-flex flex-column gap-3">
-                {/* Verdict Banner */}
                 {(() => {
                   const verdict = getVerdictStyle(result.status);
                   const Icon = verdict.icon;
@@ -194,7 +187,6 @@ export default function ConsoleDrawer({
                         <span>{verdict.label}</span>
                       </span>
 
-                      {/* Runtime & Memory */}
                       <div className="d-flex align-items-center gap-3 fs-xs text-body-secondary">
                         {result.totalRuntimeMs !== undefined && (
                           <div className="d-flex align-items-center gap-1">
@@ -261,7 +253,6 @@ export default function ConsoleDrawer({
                                 cleanActual = decoded;
                               }
                             } catch {
-                              // ignore invalid base64
                             }
                           }
 

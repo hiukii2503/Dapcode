@@ -36,11 +36,6 @@ import com.dapcode.backend_core.service.submission.CodeHarnessServiceImpl;
 import com.dapcode.backend_core.service.submission.SubmissionServiceImpl;
 import com.dapcode.backend_core.service.submission.SubmissionStreamManager;
 
-/**
- * Kiểm thử tích hợp (Integration Tests) cho Luồng Nộp bài (Submission) và Luồng Chấm bài (Grading).
- * Kết hợp truy vấn trực tiếp trên PostgreSQL qua HikariCP (SubmissionDAO, ProblemDAO, UserDAO, TestCaseDAO)
- * cùng với bộ bọc code tự động CodeHarnessServiceImpl và logic chấm điểm SubmissionServiceImpl.
- */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SubmissionIntegrationTest {
 
@@ -119,7 +114,6 @@ public class SubmissionIntegrationTest {
     @Order(1)
     @DisplayName("Kịch bản 1: Luồng nộp bài từ trạng thái PENDING sang ACCEPTED và cập nhật Runtime/Memory trên DB thật")
     void test1_SubmissionLifecycle_PendingToAccepted() {
-        // 1. Khi học viên bấm Submit -> Lưu trạng thái PENDING
         Submission pendingSub = Submission.builder()
                 .user(testUser)
                 .problem(testProblem)
@@ -132,14 +126,12 @@ public class SubmissionIntegrationTest {
         assertNotNull(saved, "Lưu bài nộp trạng thái PENDING qua HikariCP phải thành công");
         assertEquals("PENDING", saved.getStatus());
 
-        // 2. Sau khi Judge0 chấm xong -> Cập nhật trạng thái ACCEPTED cùng thời gian chạy và bộ nhớ
         Submission updated = submissionDAO.updateStatusAndMetrics(saved.getId(), "ACCEPTED", 24.5, 14200);
         assertNotNull(updated);
         assertEquals("ACCEPTED", updated.getStatus());
         assertEquals(24.5, updated.getTotalRuntimeMs());
         assertEquals(14200, updated.getMaxMemoryKb());
 
-        // 3. Kiểm tra đọc lại từ Database
         Optional<Submission> fromDb = submissionDAO.findById(saved.getId());
         assertTrue(fromDb.isPresent());
         assertEquals("ACCEPTED", fromDb.get().getStatus());
@@ -170,12 +162,10 @@ public class SubmissionIntegrationTest {
     @Order(3)
     @DisplayName("Kịch bản 3: Kiểm thử tích hợp chống gian lận điểm XP (Anti-farm XP) và truy vấn danh sách bài đã giải")
     void test3_SolvedStatus_And_AntiDuplicateXpCheck() {
-        // Trước khi có bài nộp ACCEPTED -> existsByUserIdAndProblemIdAndStatus phải trả về false
         boolean solvedBefore = submissionDAO.existsByUserIdAndProblemIdAndStatus(
                 testUser.getId(), testProblem.getId(), "ACCEPTED");
         assertFalse(solvedBefore, "Học viên chưa giải bài này nên phải trả về false");
 
-        // Nộp 1 bài bị WRONG_ANSWER -> vẫn chưa được tính là đã giải
         submissionDAO.insert(Submission.builder()
                 .user(testUser)
                 .problem(testProblem)
@@ -186,7 +176,6 @@ public class SubmissionIntegrationTest {
         assertFalse(submissionDAO.existsByUserIdAndProblemIdAndStatus(
                 testUser.getId(), testProblem.getId(), "ACCEPTED"));
 
-        // Nộp bài đạt ACCEPTED
         submissionDAO.insert(Submission.builder()
                 .user(testUser)
                 .problem(testProblem)
@@ -228,7 +217,6 @@ public class SubmissionIntegrationTest {
             return submissionDAO.updateStatusAndMetrics(s.getId(), s.getStatus(), s.getTotalRuntimeMs(), s.getMaxMemoryKb());
         });
 
-        // Test case 1 (Public) trả kết quả ĐÚNG "[0, 1]", Test case 2 (Hidden) trả kết quả SAI "[0, 0]"
         Judge0Response res1 = new Judge0Response();
         res1.setStdout("[0, 1]\n");
         res1.setTime(0.015);
@@ -263,7 +251,6 @@ public class SubmissionIntegrationTest {
         assertEquals(1, response.getPassedTestCases(), "Chỉ vượt qua 1/2 test cases");
         assertEquals(0, response.getXpEarned(), "Giải sai không được cộng điểm XP");
 
-        // Kiểm tra bảo mật: Test case công khai phải hiển thị input/output, Test case ẩn phải bị gán null
         TestCaseResult pubResult = response.getTestCaseResults().get(0);
         assertFalse(pubResult.isHidden());
         assertNotNull(pubResult.getInputData(), "Test case công khai được phép hiển thị input");

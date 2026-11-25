@@ -84,7 +84,6 @@ export default function Navbar() {
         }
       })
       .catch(() => {
-        // 401 handled in client.js interceptor
       });
   }, []);
 

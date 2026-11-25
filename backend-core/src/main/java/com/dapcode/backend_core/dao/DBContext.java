@@ -10,12 +10,6 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * DBContext quản lý kết nối CSDL sử dụng Connection Pooling (HikariCP).
- * Toàn bộ thông số cấu hình Pool được nạp động từ file cấu hình
- * hikari.properties
- * kết hợp biến môi trường thay vì gán cứng (hardcode) trong mã nguồn.
- */
 @Slf4j
 public class DBContext {
 

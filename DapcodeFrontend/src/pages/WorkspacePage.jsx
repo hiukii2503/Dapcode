@@ -44,18 +44,15 @@ export default function WorkspacePage() {
   const navigate = useNavigate();
   const { toggleTheme, isDark } = useTheme();
 
-  // Problem State
   const [problem, setProblem] = useState(null);
   const [allProblems, setAllProblems] = useState([]);
   const [isLoadingProblem, setIsLoadingProblem] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [activeLeftTab, setActiveLeftTab] = useState('description'); // 'description' | 'submissions'
 
-  // Editor State
   const [language, setLanguage] = useState('python');
   const [code, setCode] = useState(() => getStarterCode(slug, 'python'));
 
-  // Modals & Console Drawer state
   const [isAiTutorOpen, setIsAiTutorOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -63,7 +60,6 @@ export default function WorkspacePage() {
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [consoleTab, setConsoleTab] = useState('testcases');
 
-  // User state
   const [user, setUser] = useState(() => {
     try {
       const token = localStorage.getItem('dapcode_token');
@@ -113,7 +109,6 @@ export default function WorkspacePage() {
     return () => window.removeEventListener('dapcode-auth-change', syncAuth);
   }, []);
 
-  // Submission / Sandbox State
   const [submissionState, setSubmissionState] = useState({
     isRunning: false,
     isSubmitting: false,
@@ -124,7 +119,6 @@ export default function WorkspacePage() {
 
   const [authPromptMessage, setAuthPromptMessage] = useState('');
 
-  // Fetch full list of problems for dropdown selector and prev/next navigation
   useEffect(() => {
     getProblems({ size: 250 })
       .then((res) => {
@@ -138,12 +132,10 @@ export default function WorkspacePage() {
       });
   }, []);
 
-  // Navigation: Prev & Next problems
   const currentIndex = allProblems.findIndex((p) => p.slug === slug);
   const prevProblem = currentIndex > 0 ? allProblems[currentIndex - 1] : null;
   const nextProblem = currentIndex >= 0 && currentIndex < allProblems.length - 1 ? allProblems[currentIndex + 1] : null;
 
-  // Global Ctrl+K / Cmd+K listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -155,7 +147,6 @@ export default function WorkspacePage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Load problem details from Spring Boot Backend
   useEffect(() => {
     setIsLoadingProblem(true);
     setFetchError(null);
@@ -188,7 +179,6 @@ export default function WorkspacePage() {
       });
   }, [slug]);
 
-  // Handle language switch
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
     const newCode = problem?.starterCode?.[newLang] || getStarterCode(slug, newLang);
@@ -215,7 +205,6 @@ export default function WorkspacePage() {
     setIsAiTutorOpen(true);
   };
 
-  // Run Code
   const handleRunCode = useCallback(async () => {
     if (!problem) return;
     if (!checkAuth('chạy thử code')) return;
@@ -296,7 +285,6 @@ export default function WorkspacePage() {
     }
   }, [problem, language, code, user]);
 
-  // Submit Code
   const handleSubmitCode = useCallback(async () => {
     if (!problem) return;
     if (!checkAuth('nộp bài chấm điểm')) return;
@@ -449,7 +437,6 @@ export default function WorkspacePage() {
   return (
     <div className="d-flex flex-column vh-100 bg-canvas overflow-hidden">
       <header className="app-header d-flex align-items-center justify-content-between border-bottom bg-surface px-3 flex-shrink-0">
-        {/* Left Navigation Group */}
         <div className="d-flex align-items-center gap-1 min-w-0">
           <Link to="/roadmap" className="d-flex align-items-center pe-2 text-decoration-none" title="LiệtCode Roadmap">
             <DapcodeLogo size="sm" />
@@ -492,7 +479,6 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        {/* Center Action Group: Run | Submit | Testcase Toggle | AI Sparkles */}
         <div className="d-flex align-items-center gap-2">
           <div className="d-inline-flex align-items-center rounded-2 bg-body-secondary p-1">
             <button
@@ -538,19 +524,8 @@ export default function WorkspacePage() {
           >
             <Terminal size={16} />
           </button>
-
-          <button
-            type="button"
-            onClick={handleOpenAiTutor}
-            title="Trợ lý AI Tutor"
-            className="btn btn-sm btn-soft-primary d-inline-flex align-items-center justify-content-center p-0 rounded-2"
-            style={{ width: 32, height: 32 }}
-          >
-            <Sparkles size={16} />
-          </button>
         </div>
 
-        {/* Right Utility Group: Search, Theme, Streak, User Avatar */}
         <div className="d-flex align-items-center gap-1">
           <button
             type="button"
@@ -624,7 +599,6 @@ export default function WorkspacePage() {
         </div>
       </header>
 
-      {/* Main Split-Pane Workspace */}
       <div className="flex-grow-1 min-h-0 p-2 overflow-hidden">
         <div className="row g-2 h-100">
           <div className="col-12 col-lg-5 h-100">
@@ -651,7 +625,6 @@ export default function WorkspacePage() {
                 </nav>
               </div>
 
-              {/* Left Panel Content: Editorial Readable Style */}
               <div className="flex-grow-1 overflow-y-auto p-4">
                 {activeLeftTab === 'description' ? (
                   <div className="d-flex flex-column gap-3">
@@ -674,11 +647,9 @@ export default function WorkspacePage() {
                       </div>
                     </div>
 
-                    {/* Markdown Description */}
                     <MarkdownRenderer content={problem.descriptionMarkdown} />
                   </div>
                 ) : (
-                  /* Submissions History */
                   <div className="d-flex flex-column gap-3">
                     <div className="fs-xs fw-medium text-body-secondary">Lịch sử bài nộp:</div>
                     <div className="rounded-2 border bg-body-tertiary p-3 fs-xs text-body-secondary">
@@ -690,7 +661,6 @@ export default function WorkspacePage() {
             </div>
           </div>
 
-          {/* Right Pane: Monaco Editor + Collapsible Console Drawer (7 Cols on LG) */}
           <div className="col-12 col-lg-7 h-100 d-flex flex-column gap-2 overflow-hidden">
             <div
               className="w-100 min-h-0"
@@ -758,7 +728,6 @@ export default function WorkspacePage() {
         </div>
       </div>
 
-      {/* Socratic AI Tutor Drawer Flyout */}
       <AiTutorDrawer
         isOpen={isAiTutorOpen}
         onClose={() => setIsAiTutorOpen(false)}
@@ -769,7 +738,6 @@ export default function WorkspacePage() {
         lastError={submissionState.error || (submissionState.result?.status !== 'ACCEPTED' ? submissionState.result?.status : '')}
       />
 
-      {/* Global Modals in Workspace */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}

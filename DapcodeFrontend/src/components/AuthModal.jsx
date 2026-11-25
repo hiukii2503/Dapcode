@@ -9,12 +9,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  // Admin form state
   const [adminUsername, setAdminUsername] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Reset state when modal is opened
   useEffect(() => {
     if (isOpen) {
       setMode('default');
@@ -60,7 +58,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
         return;
       }
     } catch {
-      // Fallback local test session
       const demoUser = {
         name: 'LiệtCode Master',
         email: 'demo@lietcode.io',
@@ -137,7 +134,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
 
         {mode === 'default' ? (
           <>
-            {/* Modal Brand Header */}
             <div className="text-center mb-4">
               <div
                 className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-3 bg-body-tertiary border"
@@ -151,7 +147,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
               </p>
             </div>
 
-            {/* Action Prompt Banner if opened from submit/run/ai */}
             {promptMessage && (
               <div className="mb-3 d-flex align-items-start gap-2 rounded-3 border border-primary-subtle bg-primary-subtle text-primary-emphasis p-3 fs-xs">
                 <AlertCircle size={16} className="flex-shrink-0 mt-1" />
@@ -159,7 +154,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
               </div>
             )}
 
-            {/* Error Banner */}
             {errorMsg && (
               <div className="alert alert-danger mb-3 p-3 rounded-3 fs-xs d-flex align-items-start gap-2">
                 <AlertCircle size={16} className="flex-shrink-0 mt-1" />
@@ -167,9 +161,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
               </div>
             )}
 
-            {/* Action Buttons */}
             <div className="d-flex flex-column gap-3">
-              {/* Google Login Button */}
               <button
                 type="button"
                 disabled={isLoading}
@@ -207,7 +199,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
                 <hr className="flex-grow-1 my-0" />
               </div>
 
-              {/* Quick Demo Login */}
               <button
                 type="button"
                 disabled={isLoading}
@@ -218,7 +209,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
                 <span>Đăng nhập nhanh (Guest / Demo)</span>
               </button>
 
-              {/* Admin Login Trigger Button */}
               <button
                 type="button"
                 disabled={isLoading}
@@ -240,7 +230,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
           </>
         ) : (
           <>
-            {/* Admin Login Form View */}
             <div className="text-center mb-3">
               <div
                 className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-3 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"
@@ -254,7 +243,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
               </p>
             </div>
 
-            {/* Error Banner */}
             {errorMsg && (
               <div className="alert alert-danger mb-3 p-3 rounded-3 fs-xs d-flex align-items-start gap-2">
                 <AlertCircle size={16} className="flex-shrink-0 mt-1" />

@@ -42,18 +42,6 @@ import com.jayway.jsonpath.JsonPath;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
-/**
- * Kiểm thử tích hợp luồng đăng nhập quản trị và xác thực JWT, chạy qua toàn bộ stack
- * (Security filter → AuthController → AuthService → BCrypt → JPA → PostgreSQL):
- *
- * <pre>
- *   A. Đăng nhập          POST /api/v1/auth/admin-login
- *   B. Dùng token         GET  /api/v1/users/me, GET /api/v1/admin/users
- * </pre>
- *
- * Tạo riêng 3 tài khoản test (admin, admin bị khóa, học viên) với mật khẩu băm BCrypt,
- * tên ngẫu nhiên, và xóa sau khi chạy để không đụng dữ liệu có sẵn.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -106,10 +94,6 @@ class AdminLoginFlowIntegrationTest {
     void cleanUp() {
         userRepository.deleteAllById(List.of(admin.getId(), lockedAdmin.getId(), student.getId()));
     }
-
-    // ===================================================================
-    // A. ĐĂNG NHẬP
-    // ===================================================================
 
     @Test
     @Order(1)
@@ -255,10 +239,6 @@ class AdminLoginFlowIntegrationTest {
                 .andExpect(jsonPath("$.code").value(1002));
     }
 
-    // ===================================================================
-    // B. XÁC THỰC JWT Ở CÁC REQUEST SAU ĐĂNG NHẬP
-    // ===================================================================
-
     @Test
     @Order(20)
     @DisplayName("L-13 Dùng token vừa đăng nhập: /users/me trả đúng người dùng, gọi được API quản trị")
@@ -348,10 +328,6 @@ class AdminLoginFlowIntegrationTest {
         mockMvc.perform(get(ME_URL).header(HttpHeaders.AUTHORIZATION, "Token " + token))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ===================================================================
-    // Helpers
-    // ===================================================================
 
     private SecretKey serverKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));

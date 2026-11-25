@@ -1,5 +1,4 @@
 export const ROADMAP_NODES = [
-  // Level 1: Root
   {
     id: 'arrays-and-hashing',
     name: 'Arrays & Hashing',
@@ -9,7 +8,6 @@ export const ROADMAP_NODES = [
     total: 22,
   },
 
-  // Level 2: Two Branches
   {
     id: 'two-pointers',
     name: 'Two Pointers',
@@ -27,7 +25,6 @@ export const ROADMAP_NODES = [
     total: 15,
   },
 
-  // Level 3: Intermediate Data Structures
   {
     id: 'binary-search',
     name: 'Binary Search',
@@ -53,7 +50,6 @@ export const ROADMAP_NODES = [
     total: 14,
   },
 
-  // Level 4: Central Nexus (Trees)
   {
     id: 'trees',
     name: 'Trees',
@@ -63,7 +59,6 @@ export const ROADMAP_NODES = [
     total: 23,
   },
 
-  // Level 5: Tree extensions & Advanced structures
   {
     id: 'tries',
     name: 'Tries',
@@ -89,7 +84,6 @@ export const ROADMAP_NODES = [
     total: 16,
   },
 
-  // Level 6: Graph algorithms, Greedy, Intervals, 1-D DP
   {
     id: 'intervals',
     name: 'Intervals',
@@ -131,7 +125,6 @@ export const ROADMAP_NODES = [
     total: 17,
   },
 
-  // Level 7: 2-D DP & Bitwise
   {
     id: '2-d-dynamic-programming',
     name: '2-D Dynamic Programming',
@@ -149,7 +142,6 @@ export const ROADMAP_NODES = [
     total: 10,
   },
 
-  // Level 8: Math & Geometry
   {
     id: 'math-and-geometry',
     name: 'Math & Geometry',
@@ -161,39 +153,31 @@ export const ROADMAP_NODES = [
 ];
 
 export const ROADMAP_EDGES = [
-  // Root -> Level 2
   { from: 'arrays-and-hashing', to: 'two-pointers' },
   { from: 'arrays-and-hashing', to: 'stack' },
 
-  // Two Pointers -> Level 3
   { from: 'two-pointers', to: 'binary-search' },
   { from: 'two-pointers', to: 'sliding-window' },
   { from: 'two-pointers', to: 'linked-list' },
 
-  // Level 3 -> Trees
   { from: 'binary-search', to: 'trees' },
   { from: 'sliding-window', to: 'trees' },
   { from: 'linked-list', to: 'trees' },
 
-  // Trees -> Level 5
   { from: 'trees', to: 'tries' },
   { from: 'trees', to: 'heap-priority-queue' },
   { from: 'trees', to: 'backtracking' },
 
-  // Heap -> Level 6
   { from: 'heap-priority-queue', to: 'intervals' },
   { from: 'heap-priority-queue', to: 'greedy' },
   { from: 'heap-priority-queue', to: 'advanced-graphs' },
 
-  // Backtracking -> Graphs & 1-D DP
   { from: 'backtracking', to: 'graphs' },
   { from: 'backtracking', to: '1-d-dynamic-programming' },
 
-  // 1-D DP -> 2-D DP & Bit Manipulation
   { from: '1-d-dynamic-programming', to: '2-d-dynamic-programming' },
   { from: '1-d-dynamic-programming', to: 'bit-manipulation' },
 
-  // 2-D DP & Bit Manipulation -> Math & Geometry
   { from: '2-d-dynamic-programming', to: 'math-and-geometry' },
   { from: 'bit-manipulation', to: 'math-and-geometry' },
 ];

@@ -22,9 +22,6 @@ export const subscribeSubmissionStream = (submissionId, { onInit, onProgress, on
     ? `/api/v1/submissions/${submissionId}/stream?token=${encodeURIComponent(token)}`
     : `/api/v1/submissions/${submissionId}/stream`;
 
-  // Standard EventSource does not support custom Authorization headers directly,
-  // but if cookies/same-origin proxy is used, or backend accepts query param / permitAll,
-  // EventSource connects smoothly.
   const eventSource = new EventSource(url);
 
   eventSource.addEventListener('INIT', (event) => {

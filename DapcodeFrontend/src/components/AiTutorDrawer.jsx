@@ -65,7 +65,6 @@ export default function AiTutorDrawer({
 
   return (
     <Offcanvas show={isOpen} onHide={onClose} placement="end" className="offcanvas-lg-width">
-      {/* Drawer Header */}
       <Offcanvas.Header closeButton className="border-bottom bg-body-tertiary px-4">
         <div className="d-flex align-items-center gap-2 min-w-0">
           <div
@@ -88,9 +87,7 @@ export default function AiTutorDrawer({
         </div>
       </Offcanvas.Header>
 
-      {/* Drawer Scrollable Body */}
       <Offcanvas.Body className="d-flex flex-column gap-4 p-4">
-        {/* Hint Level Selector */}
         <div>
           <div className="form-label mb-2">
             Chọn mức độ hỗ trợ (Socratic Level):
@@ -122,7 +119,6 @@ export default function AiTutorDrawer({
           </div>
         </div>
 
-        {/* Question / Context Input */}
         <div>
           <label htmlFor="ai-tutor-question" className="form-label d-block">
             Câu hỏi hoặc điểm vướng mắc của bạn:
@@ -137,7 +133,6 @@ export default function AiTutorDrawer({
           />
         </div>
 
-        {/* Include current code switch */}
         <div className="d-flex align-items-center justify-content-between gap-3 rounded-2 border bg-body-tertiary px-3 py-2">
           <span className="fs-2xs">Tự động gửi code hiện tại để AI phân tích</span>
           <input
@@ -148,7 +143,6 @@ export default function AiTutorDrawer({
           />
         </div>
 
-        {/* Submit Ask Button */}
         <button
           type="button"
           disabled={isLoading}
@@ -168,7 +162,6 @@ export default function AiTutorDrawer({
           )}
         </button>
 
-        {/* Error Message */}
         {errorMsg && (
           <div className="d-flex align-items-center gap-2 rounded-2 border border-danger-subtle bg-danger-subtle text-danger-emphasis p-3 fs-xs">
             <AlertCircle size={16} className="flex-shrink-0" />
@@ -176,7 +169,6 @@ export default function AiTutorDrawer({
           </div>
         )}
 
-        {/* AI Response Display: annotation style with a left accent border */}
         {hintResponse && (
           <div className="d-flex flex-column gap-3 border-start border-2 border-primary rounded-end-3 bg-body-tertiary p-3">
             <div className="d-flex align-items-center justify-content-between gap-2 border-bottom pb-2">
@@ -192,7 +184,6 @@ export default function AiTutorDrawer({
               )}
             </div>
 
-            {/* Rendered Markdown Body */}
             <MarkdownRenderer content={hintResponse.hint} />
           </div>
         )}

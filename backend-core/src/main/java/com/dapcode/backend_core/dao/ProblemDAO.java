@@ -22,13 +22,7 @@ public interface ProblemDAO {
 
     boolean delete(UUID id);
 
-    /**
-     * Tìm kiếm, lọc và phân trang
-     */
     List<Problem> findWithFilters(String category, String difficulty, String search, int page, int size);
 
-    /**
-     * Đếm tổng số bản ghi thỏa mãn điều kiện lọc
-     */
     long countWithFilters(String category, String difficulty, String search);
 }

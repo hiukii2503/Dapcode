@@ -68,7 +68,6 @@ export default function ProblemsPage() {
             setCompletedSlugs(new Set(JSON.parse(localStorage.getItem(userKey) || '[]')));
             return;
           } catch {
-            // ignore
           }
         }
         setCompletedSlugs(new Set());

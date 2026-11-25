@@ -22,7 +22,6 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Token hết hạn hoặc không hợp lệ -> xóa cả token và user để tránh kẹt trạng thái đăng nhập ảo
       localStorage.removeItem('dapcode_token');
       localStorage.removeItem('dapcode_user');
       window.dispatchEvent(new Event('dapcode-auth-change'));

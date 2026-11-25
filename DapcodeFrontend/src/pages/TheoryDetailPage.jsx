@@ -25,7 +25,6 @@ export default function TheoryDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  // Load current theory
   useEffect(() => {
     setIsLoading(true);
     setErrorMsg(null);
@@ -48,7 +47,6 @@ export default function TheoryDetailPage() {
       });
   }, [slug]);
 
-  // Load all theories for navigation sidebar
   useEffect(() => {
     getTheories()
       .then((res) => {
@@ -62,7 +60,6 @@ export default function TheoryDetailPage() {
       });
   }, []);
 
-  // Prev and next theory navigation
   const currentIndex = allTheories.findIndex((t) => t.slug === slug);
   const prevTheory = currentIndex > 0 ? allTheories[currentIndex - 1] : null;
   const nextTheory = currentIndex >= 0 && currentIndex < allTheories.length - 1 ? allTheories[currentIndex + 1] : null;
@@ -101,7 +98,6 @@ export default function TheoryDetailPage() {
 
       <main className="flex-grow-1 mx-auto w-100 px-3 px-sm-4 py-4" style={{ maxWidth: 1280 }}>
         <div className="row g-4 align-items-start">
-          {/* Left Sidebar: Table of Contents & Syllabus Navigation (4 cols) */}
           <aside className="col-lg-4 d-none d-lg-block sticky-lg-top" style={{ top: 80 }}>
             <div className="card p-3 overflow-y-auto" style={{ maxHeight: '85vh' }}>
               <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
@@ -146,10 +142,8 @@ export default function TheoryDetailPage() {
             </div>
           </aside>
 
-          {/* Right Main Article Reader (8 cols) */}
           <article className="col-12 col-lg-8">
             <div className="card p-4">
-              {/* Breadcrumb & Navigation */}
               <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
                 <div className="d-flex align-items-center gap-2 fs-xs">
                   <Link to="/theories" className="text-body-secondary text-decoration-none">
@@ -183,7 +177,6 @@ export default function TheoryDetailPage() {
                 </div>
               </div>
 
-              {/* Article Title & Meta */}
               <div className="mb-5">
                 <div className="d-flex align-items-center gap-2 mb-2">
                   <span className="badge rounded-1 bg-body-tertiary border fs-xs text-body">
@@ -203,10 +196,8 @@ export default function TheoryDetailPage() {
                 )}
               </div>
 
-              {/* Markdown Article Content */}
               <MarkdownRenderer content={theory.contentMarkdown} />
 
-              {/* Practice CTA Footer: Flat Warm Minimalist Panel */}
               <div className="mt-5 rounded-2 border bg-body-tertiary p-4 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
                 <div>
                   <h4 className="fs-sm fw-semibold text-body-emphasis d-flex align-items-center gap-2 mb-0">

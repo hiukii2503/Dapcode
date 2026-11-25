@@ -14,13 +14,11 @@ export default function RoadmapGraph({
   const CANVAS_WIDTH = 1480;
   const CANVAS_HEIGHT = 1150;
 
-  // Node lookup map
   const nodeMap = new Map();
   ROADMAP_NODES.forEach((node) => {
     nodeMap.set(node.id, node);
   });
 
-  // Calculate completion count per node
   const getNodeStats = (node) => {
     const topicProblems = problems.filter(
       (p) =>
@@ -40,7 +38,6 @@ export default function RoadmapGraph({
 
   return (
     <div className="position-relative w-100 overflow-x-auto rounded-4 border bg-surface p-4">
-      {/* Subtle Dot Grid Background */}
       <div
         className="position-relative mx-auto"
         style={{
@@ -50,7 +47,6 @@ export default function RoadmapGraph({
           backgroundSize: '24px 24px',
         }}
       >
-        {/* SVG Bezier Edges */}
         <svg
           className="position-absolute top-0 start-0 pe-none"
           width={CANVAS_WIDTH}
@@ -75,27 +71,23 @@ export default function RoadmapGraph({
             const toNode = nodeMap.get(edge.to);
             if (!fromNode || !toNode) return null;
 
-            // Connection coordinates
             const x1 = fromNode.x;
             const y1 = fromNode.y + NODE_HEIGHT / 2;
             const x2 = toNode.x;
             const y2 = toNode.y - NODE_HEIGHT / 2;
 
-            // Vertical cubic bezier curve
             const dy = y2 - y1;
             const curve = dy * 0.5;
             const pathData = `M ${x1} ${y1} C ${x1} ${y1 + curve}, ${x2} ${y2 - curve}, ${x2} ${y2}`;
 
             return (
               <g key={`${edge.from}-${edge.to}-${index}`}>
-                {/* Background line */}
                 <path
                   d={pathData}
                   fill="none"
                   stroke={edgeShadowColor}
                   strokeWidth="5"
                 />
-                {/* Main Edge line */}
                 <path
                   d={pathData}
                   fill="none"
@@ -108,7 +100,6 @@ export default function RoadmapGraph({
           })}
         </svg>
 
-        {/* Interactive Roadmap Nodes */}
         {ROADMAP_NODES.map((node) => {
           const stats = getNodeStats(node);
           const isCompletedAll = stats.count > 0 && stats.count === stats.total;
@@ -128,7 +119,6 @@ export default function RoadmapGraph({
                 isCompletedAll ? 'bg-success-subtle border-success-subtle' : ''
               }`}
             >
-              {/* Node Title & Counter */}
               <div className="d-flex align-items-center justify-content-between gap-1">
                 <span className="text-truncate fs-xs fw-semibold text-body-emphasis">
                   {node.name}
@@ -138,7 +128,6 @@ export default function RoadmapGraph({
                 </span>
               </div>
 
-              {/* Node Mini Progress Bar */}
               <div className="progress border mt-1">
                 <div
                   className={`progress-bar ${isCompletedAll ? 'bg-success' : 'bg-contrast'}`}
