@@ -72,11 +72,15 @@ public class AdminUserServiceImpl implements AdminUserService {
     public AdminUserResponse updateUserStatus(UUID id, UpdateUserStatusRequest req, Users currentAdmin) {
         Users user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        if (currentAdmin != null && currentAdmin.getId().equals(user.getId()) && !req.isActive()) {
+        if (req.getIsActive() == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
-        user.setActive(req.isActive());
-        user.setBannedReason(req.isActive() ? null : req.getBannedReason());
+        boolean active = req.getIsActive();
+        if (currentAdmin != null && currentAdmin.getId().equals(user.getId()) && !active) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        user.setActive(active);
+        user.setBannedReason(active ? null : req.getBannedReason());
         return mapToResponse(userRepository.save(user));
     }
 

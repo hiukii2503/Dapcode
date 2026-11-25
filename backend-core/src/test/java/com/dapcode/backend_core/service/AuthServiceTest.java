@@ -90,8 +90,24 @@ public class AuthServiceTest {
     }
 
     @Test
-    void testAdminLogin_UserLocked() {
-        testAdmin.setActive(false);
+    void testAdminLogin_DefaultPasswordNoLongerBypassesHash() {
+        // Trước đây "admin123" luôn đăng nhập được dù hash không khớp (cửa sau).
+        testAdmin.setPasswordHash("hashed-new-strong-password");
+        AdminLoginRequest req = AdminLoginRequest.builder()
+                .usernameOrEmail("admin@dapcode.io")
+                .password("admin123")
+                .build();
+
+        when(userRepository.findByEmail("admin@dapcode.io")).thenReturn(Optional.of(testAdmin));
+        when(passwordEncoder.matches("admin123", "hashed-new-strong-password")).thenReturn(false);
+
+        AppException ex = assertThrows(AppException.class, () -> authService.authenticateAdmin(req));
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, ex.getErrorCode());
+    }
+
+    @Test
+    void testAdminLogin_NoPasswordHash_Rejected() {
+        testAdmin.setPasswordHash(null);
         AdminLoginRequest req = AdminLoginRequest.builder()
                 .usernameOrEmail("admin@dapcode.io")
                 .password("admin123")
@@ -100,6 +116,36 @@ public class AuthServiceTest {
         when(userRepository.findByEmail("admin@dapcode.io")).thenReturn(Optional.of(testAdmin));
 
         AppException ex = assertThrows(AppException.class, () -> authService.authenticateAdmin(req));
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, ex.getErrorCode());
+    }
+
+    @Test
+    void testAdminLogin_UserLocked() {
+        testAdmin.setActive(false);
+        AdminLoginRequest req = AdminLoginRequest.builder()
+                .usernameOrEmail("admin@dapcode.io")
+                .password("admin123")
+                .build();
+
+        when(userRepository.findByEmail("admin@dapcode.io")).thenReturn(Optional.of(testAdmin));
+        when(passwordEncoder.matches("admin123", "hashed-admin123")).thenReturn(true);
+
+        AppException ex = assertThrows(AppException.class, () -> authService.authenticateAdmin(req));
         assertEquals(ErrorCode.USER_LOCKED, ex.getErrorCode());
+    }
+
+    @Test
+    void testAdminLogin_UserLocked_WrongPassword_DoesNotRevealLock() {
+        testAdmin.setActive(false);
+        AdminLoginRequest req = AdminLoginRequest.builder()
+                .usernameOrEmail("admin@dapcode.io")
+                .password("wrongpassword")
+                .build();
+
+        when(userRepository.findByEmail("admin@dapcode.io")).thenReturn(Optional.of(testAdmin));
+        when(passwordEncoder.matches("wrongpassword", "hashed-admin123")).thenReturn(false);
+
+        AppException ex = assertThrows(AppException.class, () -> authService.authenticateAdmin(req));
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, ex.getErrorCode());
     }
 }

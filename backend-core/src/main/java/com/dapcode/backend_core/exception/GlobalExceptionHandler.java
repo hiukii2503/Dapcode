@@ -1,9 +1,11 @@
 package com.dapcode.backend_core.exception;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.dapcode.backend_core.common.ApiResponse;
 import com.dapcode.backend_core.common.ErrorCode;
@@ -47,6 +49,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.INVALID_REQUEST.getHttpStatus())
                 .body(apiResponse);
+    }
+
+    /** Body JSON sai cú pháp hoặc sai kiểu dữ liệu → lỗi của client (400), không phải 500. */
+    @ExceptionHandler(value = HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handlingUnreadableBody(HttpMessageNotReadableException exception) {
+        return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.INVALID_REQUEST));
+    }
+
+    /** Tham số path/query sai kiểu (ví dụ id không phải UUID) → 400. */
+    @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handlingTypeMismatch(MethodArgumentTypeMismatchException exception) {
+        return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.INVALID_REQUEST));
     }
 
     @ExceptionHandler(value = org.springframework.web.servlet.resource.NoResourceFoundException.class)

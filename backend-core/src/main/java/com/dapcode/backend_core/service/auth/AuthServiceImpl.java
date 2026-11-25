@@ -129,12 +129,17 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        if (!user.isActive()) {
-            throw new AppException(ErrorCode.USER_LOCKED);
+        boolean passwordMatches = user.getPasswordHash() != null
+                && passwordEncoder.matches(password, user.getPasswordHash());
+
+        if (!passwordMatches) {
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
-            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
+        // Chỉ báo "tài khoản bị khóa" khi đã chứng minh đúng mật khẩu,
+        // tránh để người không biết mật khẩu dò ra trạng thái tài khoản.
+        if (!user.isActive()) {
+            throw new AppException(ErrorCode.USER_LOCKED);
         }
 
         String genToken = jwtTokenProvider.generateToken(user);

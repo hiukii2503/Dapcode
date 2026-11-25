@@ -48,7 +48,7 @@ public class AdminUserController {
     @PutMapping("/{id}/status")
     public ApiResponse<AdminUserResponse> updateUserStatus(
             @PathVariable UUID id,
-            @RequestBody UpdateUserStatusRequest request,
+            @Valid @RequestBody UpdateUserStatusRequest request,
             @AuthenticationPrincipal Users currentAdmin) {
         AdminUserResponse response = adminUserService.updateUserStatus(id, request, currentAdmin);
         return ApiResponse.success(response);

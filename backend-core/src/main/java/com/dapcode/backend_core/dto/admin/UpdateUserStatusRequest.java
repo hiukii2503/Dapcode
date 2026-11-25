@@ -1,8 +1,10 @@
 package com.dapcode.backend_core.dto.admin;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +13,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateUserStatusRequest {
-    private boolean isActive;
+    /**
+     * Trạng thái mới của tài khoản. Nhận cả khóa JSON "isActive" lẫn "active"
+     * (frontend và AdminUserResponse dùng "active").
+     */
+    @NotNull(message = "Trạng thái tài khoản (isActive) không được để trống")
+    @JsonAlias("active")
+    private Boolean isActive;
+
     private String bannedReason;
 }
