@@ -2,6 +2,8 @@ package com.dapcode.backend_core.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dapcode.backend_core.common.ApiResponse;
+import com.dapcode.backend_core.dto.common.PageResponse;
 import com.dapcode.backend_core.dto.theory.TheoryDetailResponse;
 import com.dapcode.backend_core.dto.theory.TheorySummaryResponse;
 import com.dapcode.backend_core.service.theory.TheoryService;
@@ -24,6 +27,15 @@ public class TheoryController {
     @GetMapping
     public ApiResponse<List<TheorySummaryResponse>> getTheories(@RequestParam(required = false) String category) {
         List<TheorySummaryResponse> response = theoryService.getTheories(category);
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/paged")
+    public ApiResponse<PageResponse<TheorySummaryResponse>> getTheoriesPaged(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
+            @PageableDefault(size = 9) Pageable pageable) {
+        PageResponse<TheorySummaryResponse> response = theoryService.getTheoriesPaged(category, search, pageable);
         return ApiResponse.success(response);
     }
 

@@ -10,21 +10,28 @@ export const clearProblemsCache = () => {
 
 export const getProblems = async (params = {}) => {
   const isDefault =
-    !params.page &&
-    (!params.size || params.size === 250) &&
+    params.page === undefined &&
+    (params.size === undefined || params.size === 250) &&
     !params.category &&
     !params.difficulty &&
+    !params.search &&
     !params.query;
 
   if (isDefault && problemsCache) {
     return problemsCache;
   }
 
+  const queryParams = {
+    size: params.size ?? 250,
+    ...(params.page !== undefined ? { page: params.page } : {}),
+    ...(params.category ? { category: params.category } : {}),
+    ...(params.difficulty ? { difficulty: params.difficulty } : {}),
+    ...(params.search ? { search: params.search } : {}),
+    ...(params.query && !params.search ? { search: params.query } : {}),
+  };
+
   const res = await api.get('/problems', {
-    params: {
-      size: 250,
-      ...params,
-    },
+    params: queryParams,
   });
 
   if (isDefault) {

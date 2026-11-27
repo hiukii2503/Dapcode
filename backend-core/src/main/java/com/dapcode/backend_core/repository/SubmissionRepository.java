@@ -16,6 +16,7 @@ import com.dapcode.backend_core.entity.Submission;
 public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     List<Submission> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
+    @EntityGraph(attributePaths = { "user", "problem" })
     List<Submission> findByUserIdAndProblemIdOrderByCreatedAtDesc(UUID userId, UUID problemId);
 
     long countByStatus(String status);

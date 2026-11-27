@@ -24,7 +24,6 @@ import {
   Spinner,
   Empty,
   useToast,
-  useDebounced,
   inputCls,
   selectCls,
   btnPrimary,
@@ -282,8 +281,6 @@ export default function AdminProblemsPage() {
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const q = useDebounced(search);
-
   useEffect(() => {
     getProblems({ size: 250 })
       .then((res) => {
@@ -295,21 +292,21 @@ export default function AdminProblemsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [q, difficulty, category]);
+  }, [search, difficulty, category]);
 
   const load = useCallback(() => {
     setLoading(true);
     adminGetProblems({
       page,
       size: 15,
-      search: q || undefined,
+      search: search.trim() || undefined,
       difficulty: difficulty || undefined,
       category: category || undefined,
     })
       .then(setData)
       .catch((e) => toast.push('error', errMsg(e, 'Không tải được danh sách bài tập')))
       .finally(() => setLoading(false));
-  }, [page, q, difficulty, category]);
+  }, [page, search, difficulty, category]);
 
   useEffect(() => {
     load();

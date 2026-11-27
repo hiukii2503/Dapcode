@@ -3,6 +3,7 @@ package com.dapcode.backend_core.service.testcase;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "problem_detail", allEntries = true)
     public List<TestCaseResponse> createBatchTestCases(UUID problemId, BatchCreateTestCaseRequest req) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
@@ -61,6 +63,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "problem_detail", allEntries = true)
     public TestCaseResponse createTestCase(UUID problemId, TestCaseRequest req) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
@@ -75,6 +78,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "problem_detail", allEntries = true)
     public void deleteTestCase(UUID testCaseId) {
         TestCase tc = testCaseRepository.findById(testCaseId)
                 .orElseThrow(() -> new AppException(ErrorCode.TEST_CASE_NOT_FOUND));
@@ -83,6 +87,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "problem_detail", allEntries = true)
     public TestCaseResponse updateTestCase(UUID testCaseId, TestCaseRequest req) {
         TestCase testCase = testCaseRepository.findById(testCaseId)
                 .orElseThrow(() -> new AppException(ErrorCode.TEST_CASE_NOT_FOUND));

@@ -3,12 +3,15 @@ package com.dapcode.backend_core.service.theory;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dapcode.backend_core.common.ErrorCode;
 import com.dapcode.backend_core.dto.admin.CreateTheoryRequest;
 import com.dapcode.backend_core.dto.admin.UpdateTheoryRequest;
+import com.dapcode.backend_core.dto.common.PageResponse;
 import com.dapcode.backend_core.dto.theory.TheoryDetailResponse;
 import com.dapcode.backend_core.dto.theory.TheorySummaryResponse;
 import com.dapcode.backend_core.entity.Theories;
@@ -56,6 +59,35 @@ public class TheoryServiceImpl implements TheoryService {
                         .orderIndex(t.getOrderIndex())
                         .build())
                 .toList();
+    }
+
+    @Override
+    public PageResponse<TheorySummaryResponse> getTheoriesPaged(String category, String search, Pageable pageable) {
+        String cleanCategory = (category != null && !category.isBlank()) ? category.trim() : null;
+        String cleanSearch = (search != null && !search.isBlank()) ? search.trim() : null;
+
+        Page<Theories> pageResult = theoryRepository.findPublishedTheoriesPaged(cleanCategory, cleanSearch, pageable);
+
+        List<TheorySummaryResponse> content = pageResult.getContent().stream()
+                .map(t -> TheorySummaryResponse.builder()
+                        .id(t.getId())
+                        .slug(t.getSlug())
+                        .title(t.getTitle())
+                        .category(t.getCategory())
+                        .summary(t.getSummary())
+                        .orderIndex(t.getOrderIndex())
+                        .build())
+                .toList();
+
+        return PageResponse.<TheorySummaryResponse>builder()
+                .content(content)
+                .page(pageResult.getNumber())
+                .size(pageResult.getSize())
+                .totalElements(pageResult.getTotalElements())
+                .totalPages(pageResult.getTotalPages())
+                .isFirst(pageResult.isFirst())
+                .isLast(pageResult.isLast())
+                .build();
     }
 
     @Override

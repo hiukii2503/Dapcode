@@ -115,9 +115,8 @@ export default function RoadmapGraph({
                 width: `${NODE_WIDTH}px`,
                 height: `${NODE_HEIGHT}px`,
               }}
-              className={`card justify-content-between rounded-3 p-2 cursor-pointer hover-bg ${
-                isCompletedAll ? 'bg-success-subtle border-success-subtle' : ''
-              }`}
+              className={`card justify-content-between rounded-3 p-2 cursor-pointer hover-bg ${isCompletedAll ? 'bg-success-subtle border-success-subtle' : ''
+                }`}
             >
               <div className="d-flex align-items-center justify-content-between gap-1">
                 <span className="text-truncate fs-xs fw-semibold text-body-emphasis">

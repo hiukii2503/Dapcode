@@ -39,6 +39,41 @@ import {
   Shield,
 } from 'lucide-react';
 
+const getDraftKey = (slug) => `dapcode_draft_${slug}`;
+
+const readDraft = (slug) => {
+  if (!slug) return null;
+  try {
+    return JSON.parse(sessionStorage.getItem(getDraftKey(slug)) || 'null');
+  } catch {
+    return null;
+  }
+};
+
+const writeDraft = (slug, lang, codeStr) => {
+  if (!slug) return;
+  try {
+    const prev = readDraft(slug) || {};
+    const next = {
+      language: lang,
+      codes: { ...(prev.codes || {}), [lang]: codeStr },
+    };
+    sessionStorage.setItem(getDraftKey(slug), JSON.stringify(next));
+  } catch {
+  }
+};
+
+const removeDraftCode = (slug, lang) => {
+  if (!slug) return;
+  try {
+    const prev = readDraft(slug);
+    if (!prev?.codes) return;
+    delete prev.codes[lang];
+    sessionStorage.setItem(getDraftKey(slug), JSON.stringify(prev));
+  } catch {
+  }
+};
+
 export default function WorkspacePage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -50,8 +85,12 @@ export default function WorkspacePage() {
   const [fetchError, setFetchError] = useState(null);
   const [activeLeftTab, setActiveLeftTab] = useState('description'); // 'description' | 'submissions'
 
-  const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState(() => getStarterCode(slug, 'python'));
+  const [language, setLanguage] = useState(() => readDraft(slug)?.language || 'python');
+  const [code, setCode] = useState(() => {
+    const draft = readDraft(slug);
+    const lang = draft?.language || 'python';
+    return draft?.codes?.[lang] ?? getStarterCode(slug, lang);
+  });
 
   const [isAiTutorOpen, setIsAiTutorOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -163,7 +202,15 @@ export default function WorkspacePage() {
         const data = res?.data || res;
         if (data && data.slug) {
           setProblem(data);
-          const initialCode = data.starterCode?.[language] || getStarterCode(slug, language);
+          const draft = readDraft(slug);
+          const activeLang = draft?.language || language;
+          if (activeLang !== language) {
+            setLanguage(activeLang);
+          }
+          const initialCode =
+            draft?.codes?.[activeLang] ??
+            data.starterCode?.[activeLang] ??
+            getStarterCode(slug, activeLang);
           setCode(initialCode);
         } else {
           setFetchError('Không tìm thấy dữ liệu bài toán từ backend.');
@@ -179,13 +226,21 @@ export default function WorkspacePage() {
       });
   }, [slug]);
 
+  const handleCodeChange = (newCode) => {
+    setCode(newCode);
+    writeDraft(slug, language, newCode);
+  };
+
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
-    const newCode = problem?.starterCode?.[newLang] || getStarterCode(slug, newLang);
+    const draft = readDraft(slug);
+    const newCode = draft?.codes?.[newLang] ?? problem?.starterCode?.[newLang] ?? getStarterCode(slug, newLang);
     setCode(newCode);
+    writeDraft(slug, newLang, newCode);
   };
 
   const handleResetCode = () => {
+    removeDraftCode(slug, language);
     const resetCode = problem?.starterCode?.[language] || getStarterCode(slug, language);
     setCode(resetCode);
   };
@@ -193,6 +248,10 @@ export default function WorkspacePage() {
   const checkAuth = (actionName) => {
     const token = localStorage.getItem('dapcode_token');
     if (!token || !user) {
+      writeDraft(slug, language, code);
+      const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      sessionStorage.setItem('dapcode_auth_return', returnPath);
+      localStorage.setItem('dapcode_auth_return', returnPath);
       setAuthPromptMessage(`Bạn cần đăng nhập tài khoản để ${actionName}, tính chuỗi Streak và nhận điểm XP!`);
       setIsAuthOpen(true);
       return false;
@@ -589,7 +648,11 @@ export default function WorkspacePage() {
           ) : (
             <button
               type="button"
-              onClick={() => setIsAuthOpen(true)}
+              onClick={() => {
+                writeDraft(slug, language, code);
+                setAuthPromptMessage('');
+                setIsAuthOpen(true);
+              }}
               className="icon-btn w-auto px-2 ms-1 fs-xs fw-medium"
             >
               <User size={14} />
@@ -668,7 +731,7 @@ export default function WorkspacePage() {
             >
               <CodeEditor
                 code={code}
-                onChange={setCode}
+                onChange={handleCodeChange}
                 language={language}
                 onLanguageChange={handleLanguageChange}
                 onResetCode={handleResetCode}
@@ -745,9 +808,13 @@ export default function WorkspacePage() {
       />
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
+        onClose={() => {
+          setIsAuthOpen(false);
+          setAuthPromptMessage('');
+        }}
         onLoginSuccess={(u) => {
           setUser(u);
+          setAuthPromptMessage('');
           window.dispatchEvent(new Event('dapcode-auth-change'));
         }}
         promptMessage={authPromptMessage}

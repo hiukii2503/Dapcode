@@ -7,10 +7,12 @@ import ProgressSidebar from '../components/ProgressSidebar';
 import DifficultyBadge from '../components/DifficultyBadge';
 import RoadmapGraph from '../components/RoadmapGraph';
 import RoadmapTopicDrawer from '../components/RoadmapTopicDrawer';
+import PaginationBar from '../components/PaginationBar';
 import { getProblems } from '../api/problems';
 import { getSolvedSlugs } from '../api/submissions';
 
-const PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 const getUserCompletedKey = () => {
   try {
@@ -40,7 +42,14 @@ export default function ProblemsPage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedTopic, setSelectedTopic] = useState('ALL');
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pagedData, setPagedData] = useState({
+    content: [],
+    totalElements: 0,
+    totalPages: 1,
+  });
+  const [isPageLoading, setIsPageLoading] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
 
   const [completedSlugs, setCompletedSlugs] = useState(new Set());
@@ -114,8 +123,32 @@ export default function ProblemsPage() {
   }, []);
 
   useEffect(() => {
-    setPage(1);
-  }, [searchQuery, selectedDifficulty, selectedStatus, selectedTopic]);
+    if (isGraph || selectedStatus !== 'ALL') return;
+    let isMounted = true;
+    setIsPageLoading(true);
+    getProblems({
+      page,
+      size: pageSize,
+      category: selectedTopic !== 'ALL' ? selectedTopic : undefined,
+      difficulty: selectedDifficulty !== 'ALL' ? selectedDifficulty : undefined,
+      search: searchQuery.trim() || undefined,
+    })
+      .then((res) => {
+        if (!isMounted) return;
+        const data = res?.data || res || {};
+        const content = Array.isArray(data.content) ? data.content : [];
+        const totalElements = typeof data.totalElements === 'number' ? data.totalElements : content.length;
+        const totalPages = typeof data.totalPages === 'number' ? data.totalPages : Math.max(1, Math.ceil(totalElements / pageSize));
+        setPagedData({ content, totalElements, totalPages });
+      })
+      .catch((err) => console.error('Không thể tải trang bài tập:', err))
+      .finally(() => {
+        if (isMounted) setIsPageLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isGraph, selectedStatus, page, pageSize, selectedTopic, selectedDifficulty, searchQuery]);
 
   const topics = useMemo(() => {
     const counts = {};
@@ -126,7 +159,7 @@ export default function ProblemsPage() {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]);
   }, [allProblems]);
 
-  const filtered = useMemo(() => {
+  const statusFiltered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return allProblems.filter((p) => {
       const matchQuery = !q || p.title?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q);
@@ -139,13 +172,34 @@ export default function ProblemsPage() {
     });
   }, [allProblems, searchQuery, selectedDifficulty, selectedTopic, selectedStatus, completedSlugs]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const indexOf = (p) => allProblems.findIndex((x) => x.slug === p.slug) + 1;
+  const useServerPaging = selectedStatus === 'ALL';
+  const totalElements = useServerPaging ? pagedData.totalElements : statusFiltered.length;
+  const totalPages = useServerPaging
+    ? Math.max(1, pagedData.totalPages)
+    : Math.max(1, Math.ceil(statusFiltered.length / pageSize));
+  const pageItems = useServerPaging
+    ? pagedData.content
+    : statusFiltered.slice(page * pageSize, (page + 1) * pageSize);
+
+  const indexOf = (p, idx) => {
+    const found = allProblems.findIndex((x) => x.slug === p.slug);
+    return found >= 0 ? found + 1 : page * pageSize + idx + 1;
+  };
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePageSizeChange = (nextSize) => {
+    setPageSize(nextSize);
+    setPage(0);
+  };
 
   const pickRandom = () => {
-    if (!filtered.length) return;
-    const p = filtered[Math.floor(Math.random() * filtered.length)];
+    const pool = statusFiltered.length ? statusFiltered : allProblems;
+    if (!pool.length) return;
+    const p = pool[Math.floor(Math.random() * pool.length)];
     navigate(`/problems/${p.slug}`);
   };
 
@@ -166,7 +220,7 @@ export default function ProblemsPage() {
           <div className="d-flex flex-column gap-3">
             <div className="d-flex align-items-end justify-content-between">
               <div>
-                <h1 className="fs-xl fw-bold mb-0">LiệtCode 150 Roadmap</h1>
+                <h1 className="fs-xl fw-bold mb-0">LiệtCode 250 Roadmap</h1>
                 <p className="mt-1 mb-0 text-body-secondary">
                   Lộ trình học theo chủ đề — bấm vào một nút để xem danh sách bài tập.
                 </p>
@@ -185,14 +239,24 @@ export default function ProblemsPage() {
           <div className="row g-4 align-items-start">
             <div className="col-12 col-lg-8 col-xl-9 min-w-0 d-flex flex-column gap-3">
               <div className="d-flex align-items-center gap-2 overflow-x-auto pb-1">
-                <button type="button" onClick={() => setSelectedTopic('ALL')} className={chipCls(selectedTopic === 'ALL')}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTopic('ALL');
+                    setPage(0);
+                  }}
+                  className={chipCls(selectedTopic === 'ALL')}
+                >
                   All Topics
                 </button>
                 {topics.map(([name, count]) => (
                   <button
                     key={name}
                     type="button"
-                    onClick={() => setSelectedTopic(name === selectedTopic ? 'ALL' : name)}
+                    onClick={() => {
+                      setSelectedTopic(name === selectedTopic ? 'ALL' : name);
+                      setPage(0);
+                    }}
                     className={chipCls(selectedTopic === name)}
                   >
                     <span>{name}</span>
@@ -208,21 +272,38 @@ export default function ProblemsPage() {
                     <input
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setPage(0);
+                      }}
                       placeholder="Search questions"
                       className="form-control form-control-sm"
                       style={{ width: 224, paddingLeft: '2rem' }}
                     />
                   </div>
 
-                  <select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)} className={selectCls}>
+                  <select
+                    value={selectedDifficulty}
+                    onChange={(e) => {
+                      setSelectedDifficulty(e.target.value);
+                      setPage(0);
+                    }}
+                    className={selectCls}
+                  >
                     <option value="ALL">Difficulty</option>
                     <option value="EASY">Easy</option>
                     <option value="MEDIUM">Medium</option>
                     <option value="HARD">Hard</option>
                   </select>
 
-                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={selectCls}>
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => {
+                      setSelectedStatus(e.target.value);
+                      setPage(0);
+                    }}
+                    className={selectCls}
+                  >
                     <option value="ALL">Status</option>
                     <option value="TODO">Todo</option>
                     <option value="SOLVED">Solved</option>
@@ -236,6 +317,7 @@ export default function ProblemsPage() {
                         setSelectedDifficulty('ALL');
                         setSelectedStatus('ALL');
                         setSelectedTopic('ALL');
+                        setPage(0);
                       }}
                       className="icon-btn w-auto px-2"
                     >
@@ -254,9 +336,17 @@ export default function ProblemsPage() {
                   </button>
                 </div>
 
-                <div className="px-3 pb-1 text-body-secondary">
-                  <span className="text-success fw-medium">{completedSlugs.size}</span>
-                  <span> / {allProblems.length} Solved</span>
+                <div className="px-3 pb-1 d-flex align-items-center justify-content-between text-body-secondary">
+                  <div>
+                    <span className="text-success fw-medium">{completedSlugs.size}</span>
+                    <span> / {allProblems.length} Solved</span>
+                  </div>
+                  {isPageLoading && useServerPaging && (
+                    <span className="d-inline-flex align-items-center gap-1 fs-xs text-body-secondary">
+                      <Spinner animation="border" size="sm" style={{ width: 12, height: 12 }} />
+                      <span>Đang tải trang...</span>
+                    </span>
+                  )}
                 </div>
 
                 <table className="table table-striped table-hover align-middle mt-1 mb-0">
@@ -268,8 +358,8 @@ export default function ProblemsPage() {
                       <th className="pe-3 text-body-secondary text-end" style={{ width: 112 }}>Difficulty</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {pageItems.map((p) => {
+                  <tbody className={isPageLoading && useServerPaging ? 'opacity-50' : ''}>
+                    {pageItems.map((p, idx) => {
                       const solved = completedSlugs.has(p.slug);
                       return (
                         <tr key={p.slug || p.id}>
@@ -289,7 +379,7 @@ export default function ProblemsPage() {
                           </td>
                           <td>
                             <Link to={`/problems/${p.slug}`} className="link-body-emphasis text-decoration-none">
-                              <span className="text-body-secondary me-1">{indexOf(p)}.</span>
+                              <span className="text-body-secondary me-1">{indexOf(p, idx)}.</span>
                               {p.title}
                             </Link>
                           </td>
@@ -300,7 +390,7 @@ export default function ProblemsPage() {
                         </tr>
                       );
                     })}
-                    {pageItems.length === 0 && (
+                    {!isPageLoading && pageItems.length === 0 && (
                       <tr>
                         <td colSpan={4} className="py-5 text-center text-body-secondary">
                           Không tìm thấy bài tập phù hợp.
@@ -310,21 +400,18 @@ export default function ProblemsPage() {
                   </tbody>
                 </table>
 
-                {totalPages > 1 && (
-                  <div className="d-flex align-items-center justify-content-center gap-1 p-3 border-top">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setPage(n)}
-                        className={n === page ? 'btn btn-sm btn-contrast px-2' : 'icon-btn w-auto px-2'}
-                        style={{ minWidth: 32 }}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <PaginationBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalElements={totalElements}
+                  pageSize={pageSize}
+                  pageSizeOptions={PAGE_SIZE_OPTIONS}
+                  itemLabel="bài tập"
+                  loading={isPageLoading && useServerPaging}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  className="border-top"
+                />
               </div>
             </div>
 

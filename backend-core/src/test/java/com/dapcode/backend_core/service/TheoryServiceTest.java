@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,11 +18,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.dapcode.backend_core.common.ErrorCode;
 import com.dapcode.backend_core.dto.admin.CreateTheoryRequest;
 import com.dapcode.backend_core.dto.admin.UpdateTheoryRequest;
+import com.dapcode.backend_core.dto.common.PageResponse;
 import com.dapcode.backend_core.dto.theory.TheoryDetailResponse;
+import com.dapcode.backend_core.dto.theory.TheorySummaryResponse;
 import com.dapcode.backend_core.entity.Theories;
 import com.dapcode.backend_core.exception.AppException;
 import com.dapcode.backend_core.repository.TheoryRepository;
@@ -130,6 +137,24 @@ public class TheoryServiceTest {
         AppException ex = assertThrows(AppException.class,
                 () -> theoryService.getTheoryBySlug("slug-khong-ton-tai"));
         assertEquals(ErrorCode.THEORY_NOT_FOUND, ex.getErrorCode());
+    }
+
+    @Test
+    void testGetTheoriesPaged_Success() {
+        Pageable pageable = PageRequest.of(0, 9);
+        Page<Theories> page = new PageImpl<>(List.of(sampleTheory), pageable, 15);
+        when(theoryRepository.findPublishedTheoriesPaged("Arrays & Hashing", "Mảng", pageable))
+                .thenReturn(page);
+
+        PageResponse<TheorySummaryResponse> res = theoryService.getTheoriesPaged(" Arrays & Hashing ", " Mảng ", pageable);
+
+        assertNotNull(res);
+        assertEquals(1, res.getContent().size());
+        assertEquals("mang-va-bang-bam", res.getContent().get(0).getSlug());
+        assertEquals(0, res.getPage());
+        assertEquals(9, res.getSize());
+        assertEquals(15, res.getTotalElements());
+        assertEquals(2, res.getTotalPages());
     }
 }
 

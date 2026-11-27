@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Configuration
 public class Judge0Config {
 
@@ -30,8 +33,9 @@ public class Judge0Config {
                 .baseUrl(baseUrl)
                 .requestFactory(factory)
                 .requestInterceptor((req, body, execution) -> {
-                    System.out.println(">>> JUDGE0 URI: " + req.getURI());
-                    System.out.println(">>> JUDGE0 BODY: [" + new String(body) + "]");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Judge0 {} {} ({} bytes)", req.getMethod(), req.getURI(), body.length);
+                    }
                     return execution.execute(req, body);
                 })
                 .build();

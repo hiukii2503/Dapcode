@@ -69,7 +69,13 @@ export default function Navbar() {
 
   useEffect(() => {
     const token = localStorage.getItem('dapcode_token');
-    if (!token) return;
+    if (!token) {
+      if (user) {
+        localStorage.removeItem('dapcode_user');
+        setUser(null);
+      }
+      return;
+    }
 
     getCurrentUser()
       .then((res) => {

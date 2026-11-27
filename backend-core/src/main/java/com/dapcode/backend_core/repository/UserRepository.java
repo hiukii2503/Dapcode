@@ -6,12 +6,19 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.dapcode.backend_core.entity.Users;
 
+import jakarta.persistence.LockModeType;
+
 public interface UserRepository extends JpaRepository<Users, UUID> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM Users u WHERE u.id = :id")
+    Optional<Users> findByIdForUpdate(@Param("id") UUID id);
+
     Optional<Users> findByEmail(String email);
 
     boolean existsByEmail(String email);

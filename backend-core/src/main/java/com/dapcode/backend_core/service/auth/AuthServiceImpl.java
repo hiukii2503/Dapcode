@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         });
 
         if (!user.isActive()) {
-            throw new AppException(ErrorCode.USER_LOCKED);
+            throw new AppException(ErrorCode.USER_LOCKED, user.getBannedReason());
         }
 
         if (user.getGoogleId() == null) {
@@ -137,7 +137,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!user.isActive()) {
-            throw new AppException(ErrorCode.USER_LOCKED);
+            throw new AppException(ErrorCode.USER_LOCKED, user.getBannedReason());
         }
 
         String genToken = jwtTokenProvider.generateToken(user);

@@ -91,7 +91,7 @@ export default function RoadmapTopicDrawer({
       <div className="border-top bg-body-tertiary p-3 d-flex align-items-center justify-content-between fs-xs text-body-secondary">
         <div className="d-flex align-items-center gap-2">
           <Trophy size={14} className="text-primary" />
-          <span>NeetCode 150 Standard</span>
+          <span>LiệtCode 250 Standard</span>
         </div>
         <span className="font-monospace">{topicProblems.length} bài tập</span>
       </div>

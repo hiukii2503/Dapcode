@@ -32,12 +32,13 @@ spring:
       leak-detection-threshold: 2000
   
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
   
   flyway:
     enabled: true

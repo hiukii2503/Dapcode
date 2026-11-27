@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useId } from 'react';
+import React, { createContext, useContext, useState, useCallback, useId } from 'react';
 import { Modal, Form, Toast, ToastContainer, Spinner as BsSpinner } from 'react-bootstrap';
 import { CheckCircle2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -166,12 +166,3 @@ export function ToastProvider({ children }) {
 }
 
 export const useToast = () => useContext(ToastContext);
-
-export function useDebounced(value, delay = 300) {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setV(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return v;
-}

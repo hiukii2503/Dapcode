@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,7 @@ public class ProblemServiceImpl implements ProblemService {
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Override
+        @Cacheable("problems")
         public PageResponse<ProblemSummaryResponse> getProblems(
                         String category,
                         String difficulty,
@@ -75,6 +78,7 @@ public class ProblemServiceImpl implements ProblemService {
         }
 
         @Override
+        @Cacheable(value = "problem_detail", key = "#slug")
         public ProblemDetailResponse getProblemBySlug(String slug) {
                 Problem problem = problemDAO.findBySlug(slug)
                                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
@@ -132,6 +136,7 @@ public class ProblemServiceImpl implements ProblemService {
 
         @Override
         @Transactional
+        @CacheEvict(value = { "problems", "problem_detail" }, allEntries = true)
         public ProblemDetailResponse createProblem(CreateProblemRequest req) {
                 String slug = req.getSlug();
                 if (slug == null || slug.isBlank()) {
@@ -166,6 +171,7 @@ public class ProblemServiceImpl implements ProblemService {
 
         @Override
         @Transactional
+        @CacheEvict(value = { "problems", "problem_detail" }, allEntries = true)
         public ProblemDetailResponse updateProblem(UUID id, UpdateProblemRequest req) {
                 Problem problem = problemDAO.findById(id)
                                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));
@@ -197,6 +203,7 @@ public class ProblemServiceImpl implements ProblemService {
 
         @Override
         @Transactional
+        @CacheEvict(value = { "problems", "problem_detail" }, allEntries = true)
         public void deleteProblem(UUID id) {
                 Problem problem = problemDAO.findById(id)
                                 .orElseThrow(() -> new AppException(ErrorCode.PROBLEM_NOT_FOUND));

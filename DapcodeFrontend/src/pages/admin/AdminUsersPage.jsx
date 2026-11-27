@@ -11,7 +11,6 @@ import {
   Empty,
   Badge,
   useToast,
-  useDebounced,
   inputCls,
   selectCls,
   btnPrimary,
@@ -104,7 +103,6 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounced(search, 300);
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [page, setPage] = useState(0);
@@ -122,7 +120,7 @@ export default function AdminUsersPage() {
       const params = {
         page,
         size: 15,
-        search: debouncedSearch.trim() || undefined,
+        search: search.trim() || undefined,
         role: roleFilter !== 'ALL' ? roleFilter : undefined,
         isActive: statusFilter === 'ACTIVE' ? true : statusFilter === 'BANNED' ? false : undefined,
       };
@@ -135,7 +133,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, roleFilter, statusFilter, toast]);
+  }, [page, search, roleFilter, statusFilter, toast]);
 
   useEffect(() => {
     loadUsers();

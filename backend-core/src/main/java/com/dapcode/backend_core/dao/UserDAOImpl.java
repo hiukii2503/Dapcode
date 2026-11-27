@@ -26,6 +26,8 @@ public class UserDAOImpl implements UserDAO {
                 .passwordHash(rs.getString("password_hash"))
                 .role(rs.getString("role"))
                 .isActive(rs.getBoolean("is_active"))
+                .bannedReason(rs.getString("banned_reason"))
+                .googleId(rs.getString("google_id"))
                 .xp(rs.getInt("xp"))
                 .streakCount(rs.getInt("streak_count"))
                 .avatarUrl(rs.getString("avatar_url"))
@@ -118,8 +120,8 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public Users insert(Users user) {
         String sql = """
-                INSERT INTO users (id, username, email, password_hash, role, is_active, xp, streak_count, avatar_url, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO users (id, username, email, password_hash, role, is_active, banned_reason, google_id, xp, streak_count, avatar_url, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
         UUID newId = user.getId() != null ? user.getId() : UUID.randomUUID();
         user.setId(newId);
@@ -133,11 +135,13 @@ public class UserDAOImpl implements UserDAO {
             ps.setString(4, user.getPasswordHash());
             ps.setString(5, user.getRole() != null ? user.getRole() : "ROLE_USER");
             ps.setBoolean(6, user.isActive());
-            ps.setInt(7, user.getXp());
-            ps.setInt(8, user.getStreakCount());
-            ps.setString(9, user.getAvatarUrl());
-            ps.setTimestamp(10, now);
-            ps.setTimestamp(11, now);
+            ps.setString(7, user.getBannedReason());
+            ps.setString(8, user.getGoogleId());
+            ps.setInt(9, user.getXp());
+            ps.setInt(10, user.getStreakCount());
+            ps.setString(11, user.getAvatarUrl());
+            ps.setTimestamp(12, now);
+            ps.setTimestamp(13, now);
 
             int affected = ps.executeUpdate();
             if (affected > 0) {
@@ -155,7 +159,7 @@ public class UserDAOImpl implements UserDAO {
     public Users update(Users user) {
         String sql = """
                 UPDATE users
-                SET username = ?, email = ?, password_hash = ?, role = ?, is_active = ?, xp = ?, streak_count = ?, avatar_url = ?, updated_at = ?
+                SET username = ?, email = ?, password_hash = ?, role = ?, is_active = ?, banned_reason = ?, google_id = ?, xp = ?, streak_count = ?, avatar_url = ?, updated_at = ?
                 WHERE id = ?
                 """;
         Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -166,11 +170,13 @@ public class UserDAOImpl implements UserDAO {
             ps.setString(3, user.getPasswordHash());
             ps.setString(4, user.getRole());
             ps.setBoolean(5, user.isActive());
-            ps.setInt(6, user.getXp());
-            ps.setInt(7, user.getStreakCount());
-            ps.setString(8, user.getAvatarUrl());
-            ps.setTimestamp(9, now);
-            ps.setObject(10, user.getId());
+            ps.setString(6, user.getBannedReason());
+            ps.setString(7, user.getGoogleId());
+            ps.setInt(8, user.getXp());
+            ps.setInt(9, user.getStreakCount());
+            ps.setString(10, user.getAvatarUrl());
+            ps.setTimestamp(11, now);
+            ps.setObject(12, user.getId());
 
             int affected = ps.executeUpdate();
             if (affected > 0) {

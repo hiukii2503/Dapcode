@@ -26,6 +26,19 @@ export const getTheories = async (category) => {
   return res;
 };
 
+export const getTheoriesPaged = async (params = {}) => {
+  const queryParams = {
+    page: params.page ?? 0,
+    size: params.size ?? 9,
+    ...(params.category ? { category: params.category } : {}),
+    ...(params.search ? { search: params.search } : {}),
+  };
+
+  return await api.get('/theories/paged', {
+    params: queryParams,
+  });
+};
+
 export const getTheoryCategories = async () => {
   if (theoryCategoriesCache) {
     return theoryCategoriesCache;

@@ -1,13 +1,19 @@
 package com.dapcode.backend_core.service.submission;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.dapcode.backend_core.common.ErrorCode;
@@ -30,8 +36,9 @@ import com.dapcode.backend_core.repository.SubmissionRepository;
 import com.dapcode.backend_core.repository.TestCaseRepository;
 import com.dapcode.backend_core.repository.UserRepository;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class SubmissionServiceImpl implements SubmissionService {
 
@@ -42,6 +49,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     private final Judge0Client judge0Client;
     private final SubmissionStreamManager streamManager;
     private final CodeHarnessService codeHarnessService;
+    private final TransactionTemplate transactionTemplate;
 
     public SubmissionServiceImpl(
             ProblemRepository problemRepository,
@@ -51,6 +59,20 @@ public class SubmissionServiceImpl implements SubmissionService {
             Judge0Client judge0Client,
             SubmissionStreamManager streamManager,
             CodeHarnessService codeHarnessService) {
+        this(problemRepository, testCaseRepository, submissionRepository, userRepository,
+                judge0Client, streamManager, codeHarnessService, null);
+    }
+
+    @Autowired
+    public SubmissionServiceImpl(
+            ProblemRepository problemRepository,
+            TestCaseRepository testCaseRepository,
+            SubmissionRepository submissionRepository,
+            UserRepository userRepository,
+            Judge0Client judge0Client,
+            SubmissionStreamManager streamManager,
+            CodeHarnessService codeHarnessService,
+            TransactionTemplate transactionTemplate) {
         this.problemRepository = problemRepository;
         this.testCaseRepository = testCaseRepository;
         this.submissionRepository = submissionRepository;
@@ -58,6 +80,26 @@ public class SubmissionServiceImpl implements SubmissionService {
         this.judge0Client = judge0Client;
         this.streamManager = streamManager;
         this.codeHarnessService = codeHarnessService;
+        this.transactionTemplate = transactionTemplate;
+    }
+
+    private <T> T executeInTransaction(Supplier<T> action) {
+        if (transactionTemplate != null) {
+            return transactionTemplate.execute(status -> action.get());
+        }
+        return action.get();
+    }
+
+    private record SubmissionSetup(
+            Problem problem,
+            List<TestCase> testCases,
+            UUID submissionId,
+            int resolvedLanguageId) {
+    }
+
+    private record FinalizationResult(
+            int xpEarned,
+            int currentStreak) {
     }
 
     private record EvaluationSummary(
@@ -102,100 +144,15 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     private boolean isOutputMatched(String actual, String expected) {
-        String a = actual == null ? "" : actual.trim().replace("\r\n", "\n");
-        String e = expected == null ? "" : expected.trim().replace("\r\n", "\n");
-        if (a.equals(e)) {
-            return true;
-        }
-        String aNorm = a.replaceAll("\\s+", "").toLowerCase();
-        String eNorm = e.replaceAll("\\s+", "").toLowerCase();
-        if (aNorm.equals(eNorm)) {
-            return true;
-        }
-        java.util.Set<String> emptyEquivalents = java.util.Set.of("", "[]", "[[]]", "none", "null", "n/a", "\"\"",
-                "''");
-        if (emptyEquivalents.contains(aNorm) && emptyEquivalents.contains(eNorm)) {
-            return true;
-        }
-        aNorm = aNorm.replace("none", "null").replace("(", "[").replace(")", "]").replace(",]", "]");
-        eNorm = eNorm.replace("none", "null").replace("(", "[").replace(")", "]").replace(",]", "]");
-        if (aNorm.equals(eNorm)) {
-            return true;
-        }
-        String aUnquoted = aNorm.replaceAll("[\"'`]", "");
-        String eUnquoted = eNorm.replaceAll("[\"'`]", "");
-        if (aUnquoted.equals(eUnquoted)) {
-            return true;
-        }
-        try {
-            double da = Double.parseDouble(aUnquoted);
-            double de = Double.parseDouble(eUnquoted);
-            if (Math.abs(da - de) < 1e-5) {
-                return true;
-            }
-        } catch (NumberFormatException ignored) {
-        }
-        if (aUnquoted.startsWith("[[") && aUnquoted.endsWith("]]")
-                && eUnquoted.startsWith("[[") && eUnquoted.endsWith("]]")) {
-            if (canonicalizeNestedArray(aUnquoted).equals(canonicalizeNestedArray(eUnquoted))) {
-                return true;
-            }
-        }
-        if (aUnquoted.startsWith("[") && aUnquoted.endsWith("]")
-                && eUnquoted.startsWith("[") && eUnquoted.endsWith("]")
-                && !aUnquoted.startsWith("[[") && !eUnquoted.startsWith("[[")) {
-            String[] aItems = aUnquoted.substring(1, aUnquoted.length() - 1).split(",");
-            String[] eItems = eUnquoted.substring(1, eUnquoted.length() - 1).split(",");
-            if (aItems.length == eItems.length && aItems.length > 0) {
-                boolean allFloatEqual = true;
-                for (int i = 0; i < aItems.length; i++) {
-                    try {
-                        if (Math.abs(Double.parseDouble(aItems[i]) - Double.parseDouble(eItems[i])) >= 1e-5) {
-                            allFloatEqual = false;
-                            break;
-                        }
-                    } catch (NumberFormatException ex) {
-                        allFloatEqual = false;
-                        break;
-                    }
-                }
-                if (allFloatEqual) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return SubmissionOutputValidator.isOutputMatched(actual, expected);
     }
 
-    private String canonicalizeNestedArray(String s) {
-        String inner = s.substring(1, s.length() - 1);
-        List<String> groups = new ArrayList<>();
-        int depth = 0;
-        int start = -1;
-        for (int i = 0; i < inner.length(); i++) {
-            char c = inner.charAt(i);
-            if (c == '[') {
-                if (depth == 0) {
-                    start = i;
-                }
-                depth++;
-            } else if (c == ']') {
-                depth--;
-                if (depth == 0 && start != -1) {
-                    String groupContent = inner.substring(start + 1, i);
-                    String[] items = groupContent.isEmpty() ? new String[0] : groupContent.split(",");
-                    java.util.Arrays.sort(items);
-                    groups.add("[" + String.join(",", items) + "]");
-                    start = -1;
-                }
-            }
-        }
-        java.util.Collections.sort(groups);
-        return "[" + String.join(",", groups) + "]";
+    private boolean isOutputMatched(String problemSlug, String inputData, String actual, String expected) {
+        return SubmissionOutputValidator.isOutputMatched(problemSlug, inputData, actual, expected);
     }
 
-    private EvaluationSummary evalutateResults(List<TestCase> testCases, List<Judge0Response> judge0Responses,
-            UUID submissionId) {
+    private EvaluationSummary evalutateResults(String problemSlug, List<TestCase> testCases,
+            List<Judge0Response> judge0Responses, UUID submissionId) {
         List<TestCaseResult> testCaseResults = new ArrayList<>();
 
         int passedCount = 0;
@@ -218,7 +175,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             if (res != null) {
                 Judge0Status jStatus = res.getJudge0Status();
                 if (jStatus == Judge0Status.ACCEPTED || jStatus == Judge0Status.WRONG_ANSWER) {
-                    if (isOutputMatched(res.getStdout(), tc.getExpectedOutput())) {
+                    if (isOutputMatched(problemSlug, tc.getInputData(), res.getStdout(), tc.getExpectedOutput())) {
                         caseStatus = "ACCEPTED";
                         passedCount++;
                     } else {
@@ -260,40 +217,14 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         return new EvaluationSummary(finalStatus, totalRuntimeMs, maxMemoryKb, passedCount, testCaseResults);
-
     }
 
-    @Override
-    @Transactional
-    public SubmissionResponse submitAndEvaluate(SubmitCodeRequest request) {
-        Problem prob = findProblemBySlug(request.getProblemSlug());
-
-        List<TestCase> testCases = testCaseRepository.findByProblemId(prob.getId());
-        if (testCases.isEmpty()) {
-            throw new AppException(ErrorCode.TEST_CASE_NOT_FOUND);
-        }
-
-        Users user = findUserById(request.getUserId());
-
-        int resolvedLanguageId = resolveLanguageId(request.getLanguageId(), request.getSourceCode());
-
-        Submission submission = Submission.builder()
-                .problem(prob)
-                .user(user)
-                .languageId(resolvedLanguageId)
-                .sourceCode(request.getSourceCode())
-                .status("PENDING")
-                .build();
-        submission = submissionRepository.save(submission);
-
-        String preparedCode = codeHarnessService.prepareSourceCode(
-                prob.getSlug(),
-                resolvedLanguageId,
-                request.getSourceCode());
-
-        List<Judge0SubmissionRequest> judge0SubmissionRequests = testCases.stream()
+    private List<Judge0Response> executePerCase(Problem prob, List<TestCase> testCases, int resolvedLanguageId,
+            String preparedCode) {
+        List<Judge0SubmissionRequest> requests = testCases.stream()
                 .map(tc -> Judge0SubmissionRequest.builder()
                         .language_id(resolvedLanguageId)
+                        .compiler_options(resolvedLanguageId == 54 ? "-std=c++17" : null)
                         .source_code(preparedCode)
                         .stdin(tc.getInputData())
                         .expected_output(tc.getExpectedOutput())
@@ -303,73 +234,219 @@ public class SubmissionServiceImpl implements SubmissionService {
                                 : prob.getMemoryLimitKb())
                         .build())
                 .toList();
+        return judge0Client.executeBatch(requests);
+    }
 
-        List<Judge0Response> judge0Responses = judge0Client.executeBatch(judge0SubmissionRequests);
-
-        EvaluationSummary summary = evalutateResults(testCases, judge0Responses, submission.getId());
-
-        int xpEarned = 0;
-        if ("ACCEPTED".equals(summary.finalStatus()) && user != null) {
-
-            boolean daGiai = submissionRepository.existsByUserIdAndProblemIdAndStatus(user.getId(), prob.getId(),
-                    "ACCEPTED");
-            if (!daGiai) {
-                xpEarned = switch (prob.getDifficulty().toLowerCase()) {
-                    case "easy" -> 20;
-                    case "medium" -> 50;
-                    case "hard" -> 100;
-                    default -> 20;
-                };
-                user.setXp(user.getXp() + xpEarned);
-            }
-            ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
-            LocalDate today = LocalDate.now(zone);
-            var lastAcceptedOpt = submissionRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(user.getId(),
-                    "ACCEPTED");
-
-            if (lastAcceptedOpt.isEmpty() || lastAcceptedOpt.get().getCreatedAt() == null) {
-                user.setStreakCount(1);
-            } else {
-                LocalDate lastDate = lastAcceptedOpt.get().getCreatedAt().atZone(zone).toLocalDate();
-                if (lastDate.equals(today)) {
-                    if (user.getStreakCount() <= 0) {
-                        user.setStreakCount(1);
-                    }
-                } else if (lastDate.equals(today.minusDays(1))) {
-                    user.setStreakCount(user.getStreakCount() + 1);
-                } else {
-                    user.setStreakCount(1);
-                }
-            }
-            userRepository.save(user);
+    private List<Judge0Response> executeWithSingleCompileOptimization(
+            Problem prob,
+            List<TestCase> testCases,
+            int resolvedLanguageId,
+            String rawSourceCode,
+            String preparedCode) {
+        if (testCases.size() <= 1 || !codeHarnessService.supportsBatchExecution(resolvedLanguageId, rawSourceCode)) {
+            return executePerCase(prob, testCases, resolvedLanguageId, preparedCode);
         }
 
-        submission.setStatus(summary.finalStatus());
+        double perCaseLimitSec = prob.getTimeLimitMs() / 1000.0;
+        double batchCpuLimitSec = Math.min(10.0, Math.max(2.0, perCaseLimitSec * Math.min(testCases.size(), 5)));
 
-        submission.setTotalRuntimeMs(summary.totalRuntimeMs());
-
-        submission.setMaxMemoryKb(summary.maxMemoryKb());
-
-        submissionRepository.save(submission);
-
-        SubmissionResponse response = SubmissionResponse.builder()
-                .submissionId(submission.getId())
-                .slug(prob.getSlug())
-                .status(summary.finalStatus())
-                .totalRuntimeMs((int) summary.totalRuntimeMs())
-                .maxMemoryKb(summary.maxMemoryKb())
-                .passedTestCases(summary.passedCount())
-                .xpEarned(xpEarned)
-                .currentStreak(user != null ? user.getStreakCount() : 0)
-                .testCaseResults(summary.testCaseResults())
+        Judge0SubmissionRequest batchReq = Judge0SubmissionRequest.builder()
+                .language_id(resolvedLanguageId)
+                .compiler_options(resolvedLanguageId == 54 ? "-std=c++17" : null)
+                .source_code(preparedCode)
+                .stdin(BatchExecutionProtocol.encodeBatchInput(testCases))
+                .cpu_time_limit(batchCpuLimitSec)
+                .memory_limit(resolvedLanguageId == 62
+                        ? Math.max(prob.getMemoryLimitKb(), 1048576)
+                        : prob.getMemoryLimitKb())
                 .build();
 
-        streamManager.sendCompleted(submission.getId(), response);
+        List<Judge0Response> batchList = judge0Client.executeBatch(List.of(batchReq));
+        if (batchList != null && !batchList.isEmpty()) {
+            Judge0Response batchRes = batchList.get(0);
+            Judge0Status jStatus = batchRes.getJudge0Status();
+
+            if (jStatus == Judge0Status.COMPILATION_ERROR) {
+                return Collections.nCopies(testCases.size(), batchRes);
+            }
+
+            if (jStatus == Judge0Status.ACCEPTED || jStatus == Judge0Status.WRONG_ANSWER) {
+                List<BatchExecutionProtocol.CaseOutcome> outcomes = BatchExecutionProtocol.parseBatchOutput(
+                        batchRes.getStdout(), testCases.size());
+                if (outcomes != null) {
+                    List<Judge0Response> syntheticResponses = new ArrayList<>(outcomes.size());
+                    for (BatchExecutionProtocol.CaseOutcome outcome : outcomes) {
+                        Judge0Response item = new Judge0Response();
+                        item.setTime(outcome.runtimeMs() / 1000.0);
+                        item.setMemory(batchRes.getMemory());
+
+                        Judge0Response.Status st = new Judge0Response.Status();
+                        if (!outcome.ok()) {
+                            st.setId(Judge0Status.RUNTIME_ERROR_NZEC.getId());
+                            st.setDescription("Runtime Error (NZEC)");
+                            item.setStderr(encodeBase64(outcome.payload()));
+                        } else if (outcome.runtimeMs() > prob.getTimeLimitMs()) {
+                            st.setId(Judge0Status.TIME_LIMIT_EXCEEDED.getId());
+                            st.setDescription("Time Limit Exceeded");
+                        } else {
+                            st.setId(Judge0Status.ACCEPTED.getId());
+                            st.setDescription("Accepted");
+                            item.setStdout(encodeBase64(outcome.payload()));
+                        }
+                        item.setStatus(st);
+                        syntheticResponses.add(item);
+                    }
+                    return syntheticResponses;
+                }
+            }
+
+            log.info("Single-compile batch ended with {} for slug={} (lang={}), falling back to per-case execution",
+                    jStatus, prob.getSlug(), resolvedLanguageId);
+        }
+
+        return executePerCase(prob, testCases, resolvedLanguageId, preparedCode);
+    }
+
+    private static String encodeBase64(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        return Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Override
+    public SubmissionResponse submitAndEvaluate(SubmitCodeRequest request) {
+        SubmissionSetup setup = executeInTransaction(() -> {
+            Problem prob = findProblemBySlug(request.getProblemSlug());
+
+            List<TestCase> testCases = testCaseRepository.findByProblemId(prob.getId());
+            if (testCases.isEmpty()) {
+                throw new AppException(ErrorCode.TEST_CASE_NOT_FOUND);
+            }
+
+            Users user = findUserById(request.getUserId());
+
+            int resolvedLanguageId = resolveLanguageId(request.getLanguageId(), request.getSourceCode());
+
+            Submission submission = Submission.builder()
+                    .problem(prob)
+                    .user(user)
+                    .languageId(resolvedLanguageId)
+                    .sourceCode(request.getSourceCode())
+                    .status("PENDING")
+                    .build();
+            submission = submissionRepository.save(submission);
+
+            return new SubmissionSetup(prob, testCases, submission.getId(), resolvedLanguageId);
+        });
+
+        EvaluationSummary summary;
+        try {
+            String preparedCode = codeHarnessService.prepareSourceCode(
+                    setup.problem().getSlug(),
+                    setup.resolvedLanguageId(),
+                    request.getSourceCode());
+
+            List<Judge0Response> judge0Responses = executeWithSingleCompileOptimization(
+                    setup.problem(),
+                    setup.testCases(),
+                    setup.resolvedLanguageId(),
+                    request.getSourceCode(),
+                    preparedCode);
+
+            summary = evalutateResults(setup.problem().getSlug(), setup.testCases(), judge0Responses,
+                    setup.submissionId());
+        } catch (RuntimeException ex) {
+            executeInTransaction(() -> {
+                submissionRepository.findById(setup.submissionId()).ifPresent(sub -> {
+                    sub.setStatus("INTERNAL_ERROR");
+                    submissionRepository.save(sub);
+                });
+                return null;
+            });
+            throw ex;
+        }
+
+        final EvaluationSummary finalSummary = summary;
+        FinalizationResult fin = executeInTransaction(() -> {
+            int xpEarned = 0;
+            int currentStreak = 0;
+
+            if (request.getUserId() != null) {
+                if ("ACCEPTED".equals(finalSummary.finalStatus())) {
+                    Users lockedUser = userRepository.findByIdForUpdate(request.getUserId())
+                            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+                    boolean daGiai = submissionRepository.existsByUserIdAndProblemIdAndStatus(
+                            lockedUser.getId(), setup.problem().getId(), "ACCEPTED");
+                    if (!daGiai) {
+                        xpEarned = switch (setup.problem().getDifficulty().toLowerCase()) {
+                            case "easy" -> 20;
+                            case "medium" -> 50;
+                            case "hard" -> 100;
+                            default -> 20;
+                        };
+                        lockedUser.setXp(lockedUser.getXp() + xpEarned);
+                    }
+
+                    ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
+                    LocalDate today = LocalDate.now(zone);
+                    var lastAcceptedOpt = submissionRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                            lockedUser.getId(), "ACCEPTED");
+
+                    if (lastAcceptedOpt.isEmpty() || lastAcceptedOpt.get().getCreatedAt() == null) {
+                        lockedUser.setStreakCount(1);
+                    } else {
+                        LocalDate lastDate = lastAcceptedOpt.get().getCreatedAt().atZone(zone).toLocalDate();
+                        if (lastDate.equals(today)) {
+                            if (lockedUser.getStreakCount() <= 0) {
+                                lockedUser.setStreakCount(1);
+                            }
+                        } else if (lastDate.equals(today.minusDays(1))) {
+                            lockedUser.setStreakCount(lockedUser.getStreakCount() + 1);
+                        } else {
+                            lockedUser.setStreakCount(1);
+                        }
+                    }
+                    userRepository.save(lockedUser);
+                    currentStreak = lockedUser.getStreakCount();
+                } else {
+                    Users freshUser = findUserById(request.getUserId());
+                    currentStreak = freshUser != null ? freshUser.getStreakCount() : 0;
+                }
+            }
+
+            Submission managedSubmission = submissionRepository.findById(setup.submissionId())
+                    .orElseThrow(() -> new AppException(ErrorCode.SUBMISSION_NOT_FOUND));
+            managedSubmission.setStatus(finalSummary.finalStatus());
+            managedSubmission.setTotalRuntimeMs(finalSummary.totalRuntimeMs());
+            managedSubmission.setMaxMemoryKb(finalSummary.maxMemoryKb());
+            submissionRepository.save(managedSubmission);
+
+            return new FinalizationResult(xpEarned, currentStreak);
+        });
+
+        FinalizationResult safeFin = fin != null ? fin : new FinalizationResult(0, 0);
+
+        SubmissionResponse response = SubmissionResponse.builder()
+                .submissionId(setup.submissionId())
+                .slug(setup.problem().getSlug())
+                .status(finalSummary.finalStatus())
+                .totalRuntimeMs((int) finalSummary.totalRuntimeMs())
+                .maxMemoryKb(finalSummary.maxMemoryKb())
+                .passedTestCases(finalSummary.passedCount())
+                .xpEarned(safeFin.xpEarned())
+                .currentStreak(safeFin.currentStreak())
+                .testCaseResults(finalSummary.testCaseResults())
+                .build();
+
+        streamManager.sendCompleted(setup.submissionId(), response);
 
         return response;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SseEmitter subscribeStream(UUID submissionId, Users currUser) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new AppException(ErrorCode.SUBMISSION_NOT_FOUND));
@@ -396,7 +473,6 @@ public class SubmissionServiceImpl implements SubmissionService {
             streamManager.sendCompleted(submissionId, detail);
         }
         return emitter;
-
     }
 
     @Override

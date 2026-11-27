@@ -22,7 +22,7 @@ public class Judge0ClientImpl implements Judge0Client {
 
     @Override
     public Judge0Response executeSingle(Judge0SubmissionRequest request) {
-        log.info("Sending submission to Judge0: languageId={}", request.getLanguageId());
+        log.info("Sending submission to Judge0: languageId={}", request.getLanguage_id());
 
         return judge0RestClient.post()
                 .uri("/submissions?wait=true&base64_encoded=false")
@@ -60,7 +60,7 @@ public class Judge0ClientImpl implements Judge0Client {
 
         String getUri = "/submissions/batch?tokens=" + tokens + "&base64_encoded=true";
 
-        for (int attempt = 0; attempt < 40; attempt++) {
+        for (int attempt = 0; attempt < 100; attempt++) {
             try {
                 Thread.sleep(300);
             } catch (InterruptedException e) {

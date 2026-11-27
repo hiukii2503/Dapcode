@@ -109,13 +109,17 @@ class SubmissionServiceTest {
         when(problemRepository.findBySlug("two-sum")).thenReturn(Optional.of(sampleProblem));
         when(testCaseRepository.findByProblemId(sampleProblem.getId())).thenReturn(List.of(sampleTestCase));
         when(userRepository.findById(sampleUser.getId())).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findByIdForUpdate(sampleUser.getId())).thenReturn(Optional.of(sampleUser));
+        final Submission[] savedHolder = new Submission[1];
         when(submissionRepository.save(any(Submission.class))).thenAnswer(inv -> {
             Submission s = inv.getArgument(0);
             if (s.getId() == null) {
                 s.setId(UUID.randomUUID());
             }
+            savedHolder[0] = s;
             return s;
         });
+        when(submissionRepository.findById(any(UUID.class))).thenAnswer(inv -> Optional.ofNullable(savedHolder[0]));
         when(codeHarnessService.prepareSourceCode(any(), anyInt(), any())).thenReturn(req.getSourceCode());
 
         Judge0Response jRes = new Judge0Response();

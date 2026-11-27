@@ -56,10 +56,19 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         if (!user.isActive()) {
             log.warn("Login blocked: user account is locked/inactive: email={}", email);
-            String errorUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                    .queryParam("error", "account_locked")
-                    .build().toUriString();
-            getRedirectStrategy().sendRedirect(request, response, errorUrl);
+            String banReason = (user.getBannedReason() != null && !user.getBannedReason().isBlank())
+                    ? user.getBannedReason()
+                    : "Vi phạm quy định và điều khoản sử dụng";
+
+            String bannedUrl = UriComponentsBuilder.fromUriString(redirectUri)
+                    .queryParam("banned", "true")
+                    .queryParam("reason", banReason)
+                    .queryParam("email", user.getEmail())
+                    .encode()
+                    .build()
+                    .toUriString();
+
+            getRedirectStrategy().sendRedirect(request, response, bannedUrl);
             return;
         }
 

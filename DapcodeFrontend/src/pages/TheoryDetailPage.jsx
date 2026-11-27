@@ -122,11 +122,10 @@ export default function TheoryDetailPage() {
                     <Link
                       key={item.slug || item.id}
                       to={`/theories/${item.slug}`}
-                      className={`d-flex align-items-start gap-2 p-2 rounded-2 fs-xs text-decoration-none ${
-                        isActive
+                      className={`d-flex align-items-start gap-2 p-2 rounded-2 fs-xs text-decoration-none ${isActive
                           ? 'bg-body-tertiary text-body-emphasis fw-semibold border'
                           : 'text-body-secondary hover-bg'
-                      }`}
+                        }`}
                     >
                       <span className="fs-2xs font-monospace text-body-secondary">
                         #{item.orderIndex || 1}
@@ -205,7 +204,7 @@ export default function TheoryDetailPage() {
                     <span>Áp dụng ngay vào thực hành</span>
                   </h4>
                   <p className="fs-xs text-body-secondary mt-1 mb-0">
-                    Luyện tập các bài toán thuộc chủ đề {theory.category} trên NeetCode 150 Roadmap.
+                    Luyện tập các bài toán thuộc chủ đề {theory.category} trên LiệtCode 250 Roadmap.
                   </p>
                 </div>
                 <Link

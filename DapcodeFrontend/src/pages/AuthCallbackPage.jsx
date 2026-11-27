@@ -1,16 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Spinner } from 'react-bootstrap';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { loginWithGoogle, getCurrentUser } from '../api/auth';
+
+const getSavedReturnUrl = () => {
+  const raw =
+    sessionStorage.getItem('dapcode_auth_return') ||
+    localStorage.getItem('dapcode_auth_return') ||
+    '';
+  if (raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/auth/callback')) {
+    return raw;
+  }
+  return '/roadmap';
+};
+
+const clearSavedReturnUrl = () => {
+  sessionStorage.removeItem('dapcode_auth_return');
+  localStorage.removeItem('dapcode_auth_return');
+};
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
   const [errorMessage, setErrorMessage] = useState('');
+  const returnUrlRef = useRef(getSavedReturnUrl());
 
   useEffect(() => {
+    let cancelled = false;
+    let redirectTimer = null;
+
+    const redirectBack = (delayMs = 0) => {
+      const targetUrl = returnUrlRef.current || '/roadmap';
+      const go = () => {
+        if (cancelled) return;
+        clearSavedReturnUrl();
+        window.dispatchEvent(new Event('dapcode-auth-change'));
+        navigate(targetUrl, { replace: true });
+      };
+      if (delayMs > 0) {
+        redirectTimer = setTimeout(go, delayMs);
+      } else {
+        go();
+      }
+    };
+
     const handleCallback = async () => {
       try {
         const searchParams = new URLSearchParams(location.search);
@@ -26,9 +61,7 @@ export default function AuthCallbackPage() {
             'dapcode_ban_info',
             JSON.stringify({ reason, email })
           );
-          const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
-          sessionStorage.removeItem('dapcode_auth_return');
-          navigate(returnUrl, { replace: true });
+          redirectBack(0);
           window.dispatchEvent(
             new CustomEvent('dapcode-user-banned', { detail: { reason, email } })
           );
@@ -51,13 +84,9 @@ export default function AuthCallbackPage() {
           } catch (e) {
             console.warn('Không thể tải profile ngay:', e);
           }
+          if (cancelled) return;
           setStatus('success');
-          const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
-          sessionStorage.removeItem('dapcode_auth_return');
-          setTimeout(() => {
-            navigate(returnUrl, { replace: true });
-            window.location.reload();
-          }, 600);
+          redirectBack(500);
           return;
         }
 
@@ -77,6 +106,7 @@ export default function AuthCallbackPage() {
         }
 
         const res = await loginWithGoogle(idToken);
+        if (cancelled) return;
         const data = (res && res.data && res.data.token) ? res.data : (res?.data || res);
 
         if (data && data.token) {
@@ -87,17 +117,12 @@ export default function AuthCallbackPage() {
             localStorage.setItem('dapcode_user', JSON.stringify(userObj));
           }
           setStatus('success');
-
-          const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
-          sessionStorage.removeItem('dapcode_auth_return');
-          setTimeout(() => {
-            navigate(returnUrl, { replace: true });
-            window.location.reload();
-          }, 800);
+          redirectBack(600);
         } else {
           throw new Error('Phản hồi từ máy chủ không hợp lệ.');
         }
       } catch (err) {
+        if (cancelled) return;
         console.error('Lỗi xác thực OAuth:', err);
         if (err.response?.data?.code === 1008) {
           const reason =
@@ -109,9 +134,7 @@ export default function AuthCallbackPage() {
             'dapcode_ban_info',
             JSON.stringify({ reason })
           );
-          const returnUrl = sessionStorage.getItem('dapcode_auth_return') || '/roadmap';
-          sessionStorage.removeItem('dapcode_auth_return');
-          navigate(returnUrl, { replace: true });
+          redirectBack(0);
           window.dispatchEvent(
             new CustomEvent('dapcode-user-banned', { detail: { reason } })
           );
@@ -125,7 +148,14 @@ export default function AuthCallbackPage() {
     };
 
     handleCallback();
+
+    return () => {
+      cancelled = true;
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
   }, [location, navigate]);
+
+  const isReturningToProblem = returnUrlRef.current?.startsWith('/problems/');
 
   return (
     <div className="min-vh-100 d-flex align-items-center justify-content-center bg-canvas p-3">
@@ -152,7 +182,9 @@ export default function AuthCallbackPage() {
             </div>
             <h2 className="fs-sm fw-semibold text-body-emphasis mb-0">Đăng nhập thành công!</h2>
             <p className="fs-xs text-body-secondary mb-0">
-              Đang chuyển hướng về trang học tập...
+              {isReturningToProblem
+                ? 'Đang quay lại bài tập bạn đang làm...'
+                : 'Đang chuyển hướng về trang học tập...'}
             </p>
           </div>
         )}
@@ -171,10 +203,14 @@ export default function AuthCallbackPage() {
             <p className="fs-xs text-body-secondary mb-0">{errorMessage}</p>
             <button
               type="button"
-              onClick={() => navigate('/roadmap', { replace: true })}
+              onClick={() => {
+                const targetUrl = returnUrlRef.current || '/roadmap';
+                clearSavedReturnUrl();
+                navigate(targetUrl, { replace: true });
+              }}
               className="btn btn-sm btn-contrast mt-1 px-3 py-2 fs-xs"
             >
-              Quay lại trang chủ
+              {isReturningToProblem ? 'Quay lại bài tập' : 'Quay lại trang chủ'}
             </button>
           </div>
         )}

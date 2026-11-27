@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Spinner } from 'react-bootstrap';
 import { Sparkles, User, ShieldCheck, AlertCircle, Lock, Eye, EyeOff, Shield, ArrowLeft } from 'lucide-react';
 import api from '../api/client';
+import { loginAdmin } from '../api/auth';
 import DapcodeLogo from './DapcodeLogo';
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessage }) {
@@ -33,7 +34,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
   const handleGoogleLogin = () => {
     setIsLoading(true);
     setErrorMsg(null);
-    sessionStorage.setItem('dapcode_auth_return', window.location.pathname);
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const returnUrl = currentPath.startsWith('/auth/callback') ? '/roadmap' : currentPath;
+    sessionStorage.setItem('dapcode_auth_return', returnUrl);
+    localStorage.setItem('dapcode_auth_return', returnUrl);
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
@@ -85,10 +89,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, promptMessa
     setErrorMsg(null);
 
     try {
-      const res = await api.post('/auth/admin-login', {
-        usernameOrEmail: adminUsername.trim(),
-        password: adminPassword.trim(),
-      });
+      const res = await loginAdmin(adminUsername.trim(), adminPassword.trim());
       const data = res?.data || res;
 
       if (data && data.token) {
